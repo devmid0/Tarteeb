@@ -1,27 +1,33 @@
 /**
  * Life OS — Goals View (Main Wrapper)
  *
- * Top-level view for the Goals pillar. Manages section
+ * Top-level view for the Goals & Projects pillar. Manages section
  * switching (Active / Completed / Statistics), hydration,
- * and the shared goal-store instance.
+ * and the shared goals-store instance.
  *
  * Lifecycle:
  *   render()  → builds the shell (header, tabs, content slot)
  *   mount()   → hydrates store, binds events, renders section
  *   unmount() → unsubscribes all listeners, cleans up
  *
+ * Data flow:
+ *   GoalsStore publishes 'goals:changed' → _renderSection() rebuilds DOM
+ *   User interactions dispatch to GoalsStore → gateway → IndexedDB
+ *
  * Design constraints:
  *   - Uses accent-goals color (#f472b6)
  *   - Single re-render trigger: 'goals:changed'
  *   - Every button wired to dispatch() → gateway
+ *   - Imports GoalsStore (plural) from goals-store.js
+ *   - Imports GoalsGateway (plural) from goals-gateway.js
  */
 
 'use strict';
 
-import { GoalStore } from '../state/goal-store.js';
-import { GoalGateway } from '../../../persistence/gateways/goal-gateway.js';
-import { createGoalForm } from '../components/goal-form.js';
-import { createGoalCard } from '../components/goal-card.js';
+import { GoalsStore } from '../state/goals-store.js';
+import { GoalsGateway } from '../../../persistence/gateways/goals-gateway.js';
+import { createGoalForm, createMilestoneForm } from '../components/goal-form.js';
+import { createGoalBoard } from '../components/goal-board.js';
 
 var SECTIONS = [
     { id: 'active',    label: 'Active',     description: 'Goals in progress' },
@@ -59,13 +65,13 @@ export class GoalsView {
         header.innerHTML =
             '<div class="flex items-end justify-between mb-1">' +
                 '<h1 class="text-[28px] font-heading font-semibold text-text-primary tracking-tight leading-none">' +
-                    'Goals' +
+                    'Goals & Projects' +
                 '</h1>' +
                 '<span class="text-[12px] font-medium text-text-disabled uppercase tracking-widest pb-1">' +
                     new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) +
                 '</span>' +
             '</div>' +
-            '<p class="text-[13px] text-text-tertiary mt-1">Set intentions, track progress.</p>';
+            '<p class="text-[13px] text-text-tertiary mt-1">Set intentions, define sub-projects, track progress.</p>';
 
         /* Section Tabs */
         var tabs = document.createElement('div');
@@ -110,8 +116,8 @@ export class GoalsView {
         /* Initialise persistence + state for this pillar */
         var db = window.__lifeOS && window.__lifeOS.database;
         if (db) {
-            var gateway = new GoalGateway(db);
-            this.store  = new GoalStore(window.__lifeOS.eventBus, gateway);
+            var gateway = new GoalsGateway(db);
+            this.store  = new GoalsStore(window.__lifeOS.eventBus, gateway);
             await this.store.hydrate();
         }
 
@@ -131,7 +137,6 @@ export class GoalsView {
     /* ── Shared Callbacks ─────────────────────────────────── */
 
     _goalCardCallbacks() {
-        var self = this;
         var store = this.store;
         return {
             onComplete: function (id) {
@@ -154,7 +159,7 @@ export class GoalsView {
             onDelete: function (id) {
                 var goal = store.getGoalById(id);
                 var name = goal ? goal.title : 'this goal';
-                if (confirm('Permanently delete "' + name + '" and all its milestones?')) {
+                if (confirm('Permanently delete "' + name + '" and all its sub-projects?')) {
                     store.dispatch({ type: 'DELETE_GOAL', payload: id });
                 }
             },
@@ -216,47 +221,45 @@ export class GoalsView {
             '</span>';
         slot.appendChild(label);
 
-        /* Goal cards */
-        if (activeGoals.length > 0) {
-            var goalList = document.createElement('div');
-            goalList.className = 'space-y-3';
+        /* Goal board */
+        slot.appendChild(createGoalBoard({
+            goals:       activeGoals,
+            milestones:  store.milestones,
+            progressMap: store.getAllProgress(),
+            filter:      'active',
+            onComplete:     cbs.onComplete,
+            onAbandon:      cbs.onAbandon,
+            onDelete:       cbs.onDelete,
+            onToggleMilestone: cbs.onToggleMilestone,
+            onDeleteMilestone: cbs.onDeleteMilestone,
+            onAddMilestone: cbs.onAddMilestone,
+        }));
 
-            for (var i = 0; i < activeGoals.length; i++) {
-                var goal = activeGoals[i];
-                var milestones = store.getMilestonesByGoalId(goal.id);
-                var progress = store.getProgress(goal.id);
-
-                goalList.appendChild(createGoalCard({
-                    goal:           goal,
-                    milestones:     milestones,
-                    progress:       progress,
-                    showActions:    true,
-                    showMilestones: true,
-                    onComplete:     cbs.onComplete,
-                    onAbandon:      cbs.onAbandon,
-                    onDelete:       cbs.onDelete,
-                    onToggleMilestone: cbs.onToggleMilestone,
-                    onDeleteMilestone: cbs.onDeleteMilestone,
-                    onAddMilestone: cbs.onAddMilestone,
-                }));
-            }
-
-            slot.appendChild(goalList);
-        } else {
-            /* Empty state */
-            var emptyState = document.createElement('div');
-            emptyState.className = 'text-center py-16';
-            emptyState.innerHTML =
-                '<div class="text-5xl mb-4 opacity-20">\uD83C\uDFAF</div>' +
-                '<p class="text-[14px] text-text-secondary font-medium mb-1">No active goals</p>' +
-                '<p class="text-[12px] text-text-tertiary">Set your first goal below to start making progress.</p>';
-            slot.appendChild(emptyState);
-        }
-
-        /* Inline goal form */
+        /* Goal creation form */
         slot.appendChild(createGoalForm({
             categories: store.getAllCategories(),
-            onSubmit: function (data) { self._dispatch('ADD_GOAL', data); },
+            onSubmit: function (data) {
+                self._dispatch('ADD_GOAL', data);
+                /* After goal is created, add any inline milestones */
+                if (data.milestones && data.milestones.length > 0) {
+                    /* Wait for the next state update so we have the new goal's id */
+                    setTimeout(function () {
+                        var latestGoals = store.goals;
+                        var newest = latestGoals[latestGoals.length - 1];
+                        if (newest) {
+                            for (var m = 0; m < data.milestones.length; m++) {
+                                store.dispatch({
+                                    type: 'ADD_MILESTONE',
+                                    payload: {
+                                        goalId: newest.id,
+                                        title:  data.milestones[m].title,
+                                    },
+                                });
+                            }
+                        }
+                    }, 50);
+                }
+            },
         }));
     }
 
@@ -269,7 +272,6 @@ export class GoalsView {
             return;
         }
 
-        var self = this;
         var cbs  = this._goalCardCallbacks();
         var completedGoals = store.getCompletedGoals();
         var abandonedGoals = store.getAbandonedGoals();
@@ -284,77 +286,51 @@ export class GoalsView {
             '</span>';
         slot.appendChild(label);
 
-        /* Completed goals */
+        /* Completed goals board */
         if (completedGoals.length > 0) {
-            var completedLabel = document.createElement('h3');
-            completedLabel.className = 'text-[12px] font-semibold text-accent-goals/60 uppercase tracking-wider mb-2';
-            completedLabel.textContent = 'Completed';
-            slot.appendChild(completedLabel);
+            var completedHeading = document.createElement('h3');
+            completedHeading.className = 'text-[12px] font-semibold text-accent-goals/60 uppercase tracking-wider mb-2';
+            completedHeading.textContent = 'Completed';
+            slot.appendChild(completedHeading);
 
-            var completedList = document.createElement('div');
-            completedList.className = 'space-y-3 mb-6';
-
-            for (var i = 0; i < completedGoals.length; i++) {
-                var goal = completedGoals[i];
-                var milestones = store.getMilestonesByGoalId(goal.id);
-                var progress = store.getProgress(goal.id);
-
-                completedList.appendChild(createGoalCard({
-                    goal:           goal,
-                    milestones:     milestones,
-                    progress:       progress,
-                    showActions:    true,
-                    showMilestones: true,
-                    onRestore:      cbs.onRestore,
-                    onDelete:       cbs.onDelete,
-                    onToggleMilestone: cbs.onToggleMilestone,
-                    onDeleteMilestone: cbs.onDeleteMilestone,
-                }));
-            }
-
-            slot.appendChild(completedList);
+            slot.appendChild(createGoalBoard({
+                goals:       completedGoals,
+                milestones:  store.milestones,
+                progressMap: store.getAllProgress(),
+                filter:      'completed',
+                onRestore:      cbs.onRestore,
+                onDelete:       cbs.onDelete,
+                onToggleMilestone: cbs.onToggleMilestone,
+                onDeleteMilestone: cbs.onDeleteMilestone,
+            }));
         }
 
-        /* Abandoned goals */
+        /* Abandoned goals board */
         if (abandonedGoals.length > 0) {
-            var abandonedLabel = document.createElement('h3');
-            abandonedLabel.className = 'text-[12px] font-semibold text-text-disabled uppercase tracking-wider mb-2';
-            abandonedLabel.textContent = 'Abandoned';
-            slot.appendChild(abandonedLabel);
+            var abandonedHeading = document.createElement('h3');
+            abandonedHeading.className = 'text-[12px] font-semibold text-text-disabled uppercase tracking-wider mb-2 mt-6';
+            abandonedHeading.textContent = 'Abandoned';
+            slot.appendChild(abandonedHeading);
 
-            var abandonedList = document.createElement('div');
-            abandonedList.className = 'space-y-3';
-
-            for (var j = 0; j < abandonedGoals.length; j++) {
-                var aGoal = abandonedGoals[j];
-                var aMilestones = store.getMilestonesByGoalId(aGoal.id);
-                var aProgress = store.getProgress(aGoal.id);
-
-                abandonedList.appendChild(createGoalCard({
-                    goal:           aGoal,
-                    milestones:     aMilestones,
-                    progress:       aProgress,
-                    showActions:    true,
-                    showMilestones: true,
-                    onRestore:      cbs.onRestore,
-                    onDelete:       cbs.onDelete,
-                    onToggleMilestone: cbs.onToggleMilestone,
-                    onDeleteMilestone: cbs.onDeleteMilestone,
-                }));
-            }
-
-            slot.appendChild(abandonedList);
+            slot.appendChild(createGoalBoard({
+                goals:       abandonedGoals,
+                milestones:  store.milestones,
+                progressMap: store.getAllProgress(),
+                filter:      'abandoned',
+                onRestore:      cbs.onRestore,
+                onDelete:       cbs.onDelete,
+                onToggleMilestone: cbs.onToggleMilestone,
+                onDeleteMilestone: cbs.onDeleteMilestone,
+            }));
         }
 
         /* Empty state */
         if (completedGoals.length === 0 && abandonedGoals.length === 0) {
-            var emptyState = document.createElement('div');
-            emptyState.className = 'text-center py-16';
-            emptyState.innerHTML =
-                '<div class="text-5xl mb-4 opacity-20">\uD83C\uDFC6</div>' +
-                '<p class="text-[14px] text-text-secondary font-medium mb-1">No completed goals yet</p>' +
-                '<p class="text-[12px] text-text-tertiary">Your achievements will appear here.</p>';
-            slot.appendChild(emptyState);
+            slot.appendChild(createGoalBoard({
+                goals:      [],
+                milestones: [],
+                filter:     'completed',
+            }));
         }
     }
 
@@ -372,6 +348,26 @@ export class GoalsView {
         /* Stats hero */
         slot.appendChild(_statsHero(stats));
 
+        /* Upcoming deadlines */
+        var upcoming = store.getUpcomingDeadlines(5);
+        if (upcoming.length > 0) {
+            var upcomingLabel = document.createElement('h3');
+            upcomingLabel.className = 'text-[13px] font-medium text-text-secondary mb-3 mt-6';
+            upcomingLabel.textContent = 'Upcoming Deadlines';
+            slot.appendChild(upcomingLabel);
+
+            var upcomingList = document.createElement('div');
+            upcomingList.className = 'space-y-1.5';
+
+            for (var u = 0; u < upcoming.length; u++) {
+                var ug = upcoming[u];
+                var uProgress = store.getProgress(ug.id);
+                upcomingList.appendChild(_deadlineRow(ug, uProgress));
+            }
+
+            slot.appendChild(upcomingList);
+        }
+
         /* Category breakdown */
         var categories = store.getAllCategories();
         if (categories.length > 0 && stats.totalGoals > 0) {
@@ -385,7 +381,7 @@ export class GoalsView {
 
             for (var i = 0; i < categories.length; i++) {
                 var cat = categories[i];
-                var catGoals = store.goals.filter(function (g) { return g.category === cat; });
+                var catGoals = store.getGoalsByCategory(cat);
                 var catActive = catGoals.filter(function (g) { return g.status === 'active'; }).length;
                 var catCompleted = catGoals.filter(function (g) { return g.status === 'completed'; }).length;
 
@@ -431,7 +427,7 @@ export class GoalsView {
 
             for (var p = 0; p < priorities.length; p++) {
                 var prio = priorities[p];
-                var prioGoals = store.goals.filter(function (g) { return g.priority === prio; });
+                var prioGoals = store.getGoalsByPriority(prio);
                 var prioActive = prioGoals.filter(function (g) { return g.status === 'active'; }).length;
 
                 var prioCell = document.createElement('div');
@@ -451,13 +447,58 @@ export class GoalsView {
             slot.appendChild(prioList);
         }
 
+        /* Goals without milestones */
+        var orphanGoals = store.getGoalsWithoutMilestones();
+        if (orphanGoals.length > 0) {
+            var orphanLabel = document.createElement('h3');
+            orphanLabel.className = 'text-[13px] font-medium text-status-warning mb-3 mt-6';
+            orphanLabel.textContent = 'Goals Without Sub-Projects';
+            slot.appendChild(orphanLabel);
+
+            var orphanNote = document.createElement('p');
+            orphanNote.className = 'text-[12px] text-text-tertiary mb-3';
+            orphanNote.textContent = 'These goals have no defined sub-projects. Breaking them into steps improves trackability.';
+            slot.appendChild(orphanNote);
+
+            var orphanList = document.createElement('div');
+            orphanList.className = 'space-y-1.5';
+
+            for (var oi = 0; oi < orphanGoals.length; oi++) {
+                var og = orphanGoals[oi];
+                var orphanRow = document.createElement('div');
+                orphanRow.className = [
+                    'flex items-center gap-3 px-4 py-2.5 rounded-xl',
+                    'bg-surface-raised/40 border border-white/[0.03]',
+                ].join(' ');
+
+                var orphanEmoji = document.createElement('span');
+                orphanEmoji.className = 'text-base select-none';
+                orphanEmoji.textContent = og.emoji || '\uD83C\uDFAF';
+                orphanRow.appendChild(orphanEmoji);
+
+                var orphanTitle = document.createElement('span');
+                orphanTitle.className = 'flex-1 text-[13px] text-text-secondary font-medium';
+                orphanTitle.textContent = og.title;
+                orphanRow.appendChild(orphanTitle);
+
+                var orphanBadge = document.createElement('span');
+                orphanBadge.className = 'text-[10px] text-status-warning bg-status-warning/10 px-2 py-0.5 rounded font-medium';
+                orphanBadge.textContent = 'No sub-projects';
+                orphanRow.appendChild(orphanBadge);
+
+                orphanList.appendChild(orphanRow);
+            }
+
+            slot.appendChild(orphanList);
+        }
+
         /* Empty state */
         if (stats.totalGoals === 0) {
             slot.innerHTML +=
                 '<div class="text-center py-12">' +
                     '<div class="text-5xl mb-3 opacity-20">\uD83D\uDCCA</div>' +
                     '<p class="text-[14px] text-text-secondary font-medium">No statistics yet</p>' +
-                    '<p class="text-[12px] text-text-tertiary mt-1">Create goals and track milestones to see your progress.</p>' +
+                    '<p class="text-[12px] text-text-tertiary mt-1">Create goals and track sub-projects to see your progress.</p>' +
                 '</div>';
         }
     }
@@ -479,19 +520,15 @@ export class GoalsView {
 
         var refresh = function () { self._renderSection(); };
 
-        bus.subscribe('goals:changed', refresh);
-        bus.subscribe('goals:validation-error', function (errors) {
+        var unsubChanged = bus.subscribe('goals:changed', refresh);
+        var unsubError   = bus.subscribe('goals:error', function (msg) {
+            console.warn('[Goals] Error:', msg);
+        });
+        var unsubValidation = bus.subscribe('goals:validation-error', function (errors) {
             console.warn('[Goals] Validation:', errors);
         });
 
-        this._unsubs.push(
-            function () { bus.unsubscribe('goals:changed', refresh); },
-            function () {
-                bus.unsubscribe('goals:validation-error', function (errors) {
-                    console.warn('[Goals] Validation:', errors);
-                });
-            }
-        );
+        this._unsubs.push(unsubChanged, unsubError, unsubValidation);
     }
 }
 
@@ -499,9 +536,6 @@ export class GoalsView {
    INTERNAL UI BUILDERS — Pure functions, no state
    ================================================================ */
 
-/**
- * Stats hero card with key metrics.
- */
 function _statsHero(stats) {
     var hero = document.createElement('div');
     hero.className = [
@@ -537,15 +571,82 @@ function _statsHero(stats) {
 
 function _statCell(label, value, type) {
     var colors = {
-        primary: 'text-text-primary',
-        active:  'text-accent-goals',
-        done:    'text-status-success',
+        primary:  'text-text-primary',
+        active:   'text-accent-goals',
+        done:     'text-status-success',
         progress: 'text-accent-goals',
     };
     return '<div>' +
         '<div class="text-[10px] text-text-disabled uppercase tracking-wider mb-0.5">' + label + '</div>' +
         '<div class="text-[18px] font-heading font-bold leading-none tabular-nums ' + (colors[type] || 'text-text-primary') + '">' + value + '</div>' +
     '</div>';
+}
+
+function _deadlineRow(goal, progress) {
+    var row = document.createElement('div');
+    row.className = [
+        'flex items-center justify-between px-4 py-2.5 rounded-xl',
+        'bg-surface-raised/40 border border-white/[0.03]',
+    ].join(' ');
+
+    var left = document.createElement('div');
+    left.className = 'flex items-center gap-2.5 min-w-0';
+
+    var emoji = document.createElement('span');
+    emoji.className = 'text-base select-none flex-shrink-0';
+    emoji.textContent = goal.emoji || '\uD83C\uDFAF';
+    left.appendChild(emoji);
+
+    var titleCol = document.createElement('div');
+    titleCol.className = 'min-w-0';
+
+    var title = document.createElement('span');
+    title.className = 'text-[13px] font-medium text-text-primary block truncate';
+    title.textContent = goal.title;
+    titleCol.appendChild(title);
+
+    var pct = document.createElement('span');
+    pct.className = 'text-[11px] text-text-disabled tabular-nums';
+    pct.textContent = progress.total > 0
+        ? progress.completed + '/' + progress.total + ' sub-projects'
+        : 'No sub-projects';
+    titleCol.appendChild(pct);
+
+    left.appendChild(titleCol);
+    row.appendChild(left);
+
+    var deadline = document.createElement('span');
+    var days = goal.deadline ? _daysRemaining(goal.deadline) : null;
+    var dlColor = days !== null && days < 0
+        ? 'text-status-error font-semibold'
+        : days !== null && days <= 3
+            ? 'text-status-warning'
+            : 'text-text-disabled';
+    deadline.className = 'text-[11px] flex-shrink-0 ml-3 ' + dlColor;
+    deadline.textContent = _formatDeadline(goal.deadline);
+    row.appendChild(deadline);
+
+    return row;
+}
+
+function _daysRemaining(deadline) {
+    if (!deadline) return null;
+    var now = new Date();
+    now.setHours(0, 0, 0, 0);
+    var parts = deadline.split('-');
+    var target = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return Math.ceil((target - now) / 86400000);
+}
+
+function _formatDeadline(deadline) {
+    if (!deadline) return 'No deadline';
+    var days = _daysRemaining(deadline);
+    if (days === 0) return 'Due today';
+    if (days === 1) return 'Due tomorrow';
+    if (days === -1) return 'Overdue 1d';
+    if (days < -1) return 'Overdue ' + Math.abs(days) + 'd';
+    if (days > 0) return days + 'd left';
+    return deadline;
 }
 
 export default GoalsView;

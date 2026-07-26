@@ -1,22 +1,25 @@
 /**
- * Life OS — Goal Creation Form
+ * Life OS — Goal Form Component
  *
- * Inline expandable form for creating new goals.
- * Expands from a single-line trigger into a full form with
- * title, description, emoji, category, priority, and deadline.
+ * Dual-mode modular form for:
+ *   1. Creating high-level goals (mode: 'goal')
+ *   2. Adding sub-projects / milestones to an existing goal (mode: 'milestone')
  *
- * Visual behavior:
+ * Visual behavior (goal mode):
  *   1. Collapsed: dashed-border "Set a new goal..." trigger
- *   2. Focused: expands downward with form fields
- *   3. Submitted: collapses, inputs clear, goal appears in list
- *   4. Escape: collapses without creating
+ *   2. Focused: expands downward with title, description, emoji, category, priority, deadline
+ *   3. Expanded: inline sub-project list builder for initial milestones
+ *   4. Submitted: collapses, inputs clear, goal appears in board
+ *   5. Escape: collapses without creating
  *
- * Factory signature:
- *   createGoalForm(opts) → HTMLElement
+ * Visual behavior (milestone mode):
+ *   1. Compact input row: text field + add button
+ *   2. Enter / click: dispatches, field clears
+ *   3. Escape: blurs
  *
- * opts:
- *   categories  {string[]}  — existing goal categories for autocomplete
- *   onSubmit    {Function(data)} — called with goal data object
+ * Factory signatures:
+ *   createGoalForm(opts)     → HTMLElement  (goal creation)
+ *   createMilestoneForm(opts) → HTMLElement  (inline milestone addition)
  */
 
 'use strict';
@@ -28,7 +31,14 @@ import { EMOJI_POOL, PRIORITY_LABELS } from '../domain/goal-rules.js';
 var SVG_PLUS = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-4 h-4">' +
     '<path d="M7 3v8M3 7h8"/></svg>';
 
+var SVG_PLUS_SM = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-3 h-3">' +
+    '<path d="M7 3v8M3 7h8"/></svg>';
+
 var SVG_CHEVRON = '<svg viewBox="0 0 12 12" fill="currentColor" class="w-2.5 h-2.5"><path d="M3 5l3 3 3-3"/></svg>';
+
+var SVG_CHECK = '<svg viewBox="0 0 14 14" fill="none" class="w-3 h-3"><path d="M3 7.5l3 3 5.5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+var SVG_CLOSE = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-3 h-3"><path d="M3 3l6 6M9 3l-6 6"/></svg>';
 
 /* ── Priority color map (Tailwind classes) ──────────────── */
 
@@ -38,8 +48,17 @@ var PRIORITY_BTN_COLORS = {
     low:    'bg-status-success/15 text-status-success border-status-success/20',
 };
 
-/* ── Factory ─────────────────────────────────────────────── */
+/* ================================================================
+   GOAL FORM — Factory
+   ================================================================ */
 
+/**
+ * Create a goal creation form.
+ * @param {Object} opts
+ * @param {string[]} opts.categories — existing goal categories for autocomplete
+ * @param {Function} opts.onSubmit — called with goal data object
+ * @returns {HTMLElement}
+ */
 export function createGoalForm(opts) {
     var o = opts || {};
     var existingCategories = o.categories || [];
@@ -102,7 +121,7 @@ export function createGoalForm(opts) {
         'bg-white/[0.04] hover:bg-white/[0.08]',
         'border border-white/[0.06] transition-colors duration-150',
     ].join(' ');
-    emojiBtn.textContent = '🎯';
+    emojiBtn.textContent = '\uD83C\uDFAF';
     emojiBtn.title = 'Pick an icon';
 
     /* Emoji picker dropdown */
@@ -113,7 +132,7 @@ export function createGoalForm(opts) {
         'p-2 grid grid-cols-8 gap-1',
     ].join(' ');
 
-    var selectedEmoji = '🎯';
+    var selectedEmoji = '\uD83C\uDFAF';
 
     for (var ic = 0; ic < EMOJI_POOL.length; ic++) {
         (function (emoji) {
@@ -240,7 +259,121 @@ export function createGoalForm(opts) {
     row3.appendChild(priorityWrap);
     row3.appendChild(deadlineInput);
 
-    /* ── Row 4: Actions ── */
+    /* ── Row 4: Inline Sub-Project Builder ── */
+    var milestonesSection = document.createElement('div');
+    milestonesSection.className = 'border-t border-white/[0.04] pt-3';
+
+    var milestonesLabel = document.createElement('div');
+    milestonesLabel.className = 'flex items-center justify-between mb-2';
+
+    var milestonesLabelText = document.createElement('span');
+    milestonesLabelText.className = 'text-[11px] font-medium text-text-tertiary uppercase tracking-wider';
+    milestonesLabelText.textContent = 'Sub-Projects (optional)';
+
+    var milestoneCount = document.createElement('span');
+    milestoneCount.className = 'text-[11px] text-accent-goals/70 tabular-nums font-medium';
+    milestoneCount.textContent = '0 added';
+
+    milestonesLabel.appendChild(milestonesLabelText);
+    milestonesLabel.appendChild(milestoneCount);
+    milestonesSection.appendChild(milestonesLabel);
+
+    /* Milestone list (items added inline) */
+    var milestoneList = document.createElement('div');
+    milestoneList.className = 'space-y-1.5 mb-2';
+    milestonesSection.appendChild(milestoneList);
+
+    /* Internal array tracking added milestones before goal submission */
+    var pendingMilestones = [];
+
+    /* Milestone input row */
+    var milestoneInputRow = document.createElement('div');
+    milestoneInputRow.className = 'flex items-center gap-2';
+
+    var milestoneInput = document.createElement('input');
+    milestoneInput.type = 'text';
+    milestoneInput.className = [
+        'flex-1 bg-transparent text-[12px] text-text-secondary',
+        'px-2.5 py-1.5 rounded-lg',
+        'border border-dashed border-white/[0.06]',
+        'hover:border-white/[0.1] focus:border-accent-goals/30',
+        'focus:outline-none transition-colors duration-150',
+        'placeholder:text-text-disabled/40',
+    ].join(' ');
+    milestoneInput.placeholder = 'Define a sub-project step\u2026';
+
+    var milestoneAddBtn = document.createElement('button');
+    milestoneAddBtn.type = 'button';
+    milestoneAddBtn.className = [
+        'p-1.5 rounded-lg text-accent-goals/60 hover:text-accent-goals',
+        'hover:bg-white/[0.04] transition-colors duration-150',
+    ].join(' ');
+    milestoneAddBtn.innerHTML = SVG_PLUS_SM;
+    milestoneAddBtn.title = 'Add sub-project';
+
+    function _addPendingMilestone() {
+        var val = milestoneInput.value.trim();
+        if (!val) return;
+        pendingMilestones.push({ title: val });
+        _renderPendingMilestones();
+        milestoneInput.value = '';
+        milestoneInput.focus();
+    }
+
+    function _removePendingMilestone(index) {
+        pendingMilestones.splice(index, 1);
+        _renderPendingMilestones();
+    }
+
+    function _renderPendingMilestones() {
+        milestoneList.innerHTML = '';
+        milestoneCount.textContent = pendingMilestones.length + ' added';
+
+        for (var mi = 0; mi < pendingMilestones.length; mi++) {
+            (function (idx) {
+                var row = document.createElement('div');
+                row.className = [
+                    'group/ms flex items-center gap-2 py-1 px-2 rounded-lg',
+                    'bg-white/[0.02] hover:bg-white/[0.04] transition-colors duration-100',
+                ].join(' ');
+
+                var num = document.createElement('span');
+                num.className = 'flex-shrink-0 w-4 h-4 rounded-full bg-accent-goals/15 text-accent-goals text-[9px] font-bold flex items-center justify-center';
+                num.textContent = String(idx + 1);
+                row.appendChild(num);
+
+                var title = document.createElement('span');
+                title.className = 'flex-1 text-[12px] text-text-secondary truncate';
+                title.textContent = pendingMilestones[idx].title;
+                row.appendChild(title);
+
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = [
+                    'flex-shrink-0 p-0.5 rounded text-text-disabled',
+                    'opacity-0 group-hover/ms:opacity-100',
+                    'hover:text-status-error hover:bg-white/[0.04]',
+                    'transition-all duration-100',
+                ].join(' ');
+                removeBtn.innerHTML = SVG_CLOSE;
+                removeBtn.addEventListener('click', function () { _removePendingMilestone(idx); });
+                row.appendChild(removeBtn);
+
+                milestoneList.appendChild(row);
+            })(mi);
+        }
+    }
+
+    milestoneInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); _addPendingMilestone(); }
+    });
+    milestoneAddBtn.addEventListener('click', _addPendingMilestone);
+
+    milestoneInputRow.appendChild(milestoneInput);
+    milestoneInputRow.appendChild(milestoneAddBtn);
+    milestonesSection.appendChild(milestoneInputRow);
+
+    /* ── Row 5: Actions ── */
     var row4 = document.createElement('div');
     row4.className = 'flex items-center justify-end gap-2 pt-1';
 
@@ -269,6 +402,7 @@ export function createGoalForm(opts) {
     formInner.appendChild(row1);
     formInner.appendChild(descInput);
     formInner.appendChild(row3);
+    formInner.appendChild(milestonesSection);
     formInner.appendChild(row4);
     expandedForm.appendChild(formInner);
 
@@ -279,14 +413,14 @@ export function createGoalForm(opts) {
         expanded = true;
         collapsedRow.classList.add('hidden');
         expandedForm.classList.remove('max-h-0', 'opacity-0');
-        expandedForm.classList.add('max-h-[400px]', 'opacity-100');
+        expandedForm.classList.add('max-h-[600px]', 'opacity-100');
         requestAnimationFrame(function () { titleInput.focus(); });
     }
 
     function collapse() {
         expanded = false;
         expandedForm.classList.add('max-h-0', 'opacity-0');
-        expandedForm.classList.remove('max-h-[400px]', 'opacity-100');
+        expandedForm.classList.remove('max-h-[600px]', 'opacity-100');
         collapsedRow.classList.remove('hidden');
         _resetForm();
     }
@@ -296,10 +430,12 @@ export function createGoalForm(opts) {
         descInput.value = '';
         categoryInput.value = '';
         deadlineInput.value = '';
-        selectedEmoji = '🎯';
-        emojiBtn.textContent = '🎯';
+        selectedEmoji = '\uD83C\uDFAF';
+        emojiBtn.textContent = '\uD83C\uDFAF';
         currentPriority = 'medium';
         priorityBtn.querySelector('.priority-label').textContent = 'Medium';
+        pendingMilestones.length = 0;
+        _renderPendingMilestones();
     }
 
     /* ── Gather Form Data ── */
@@ -312,6 +448,7 @@ export function createGoalForm(opts) {
             category:    categoryInput.value.trim() || 'general',
             priority:    currentPriority,
             deadline:    deadlineInput.value || null,
+            milestones:  pendingMilestones.slice(),
         };
     }
 
@@ -353,4 +490,61 @@ export function createGoalForm(opts) {
     wrapper.appendChild(expandedForm);
 
     return wrapper;
+}
+
+/* ================================================================
+   MILESTONE FORM — Factory (inline addition to existing goal)
+   ================================================================ */
+
+/**
+ * Create an inline milestone addition form.
+ * @param {Object} opts
+ * @param {number} opts.goalId — target goal
+ * @param {Function} opts.onSubmit — called with (goalId, title)
+ * @returns {HTMLElement}
+ */
+export function createMilestoneForm(opts) {
+    var o = opts || {};
+
+    var row = document.createElement('div');
+    row.className = 'flex items-center gap-2';
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = [
+        'flex-1 bg-transparent text-[12px] text-text-secondary',
+        'px-2.5 py-1.5 rounded-lg',
+        'border border-dashed border-white/[0.06]',
+        'hover:border-white/[0.1] focus:border-accent-goals/30',
+        'focus:outline-none transition-colors duration-150',
+        'placeholder:text-text-disabled/40',
+    ].join(' ');
+    input.placeholder = 'Add a sub-project\u2026';
+
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = [
+        'p-1.5 rounded-lg text-accent-goals/60 hover:text-accent-goals',
+        'hover:bg-white/[0.04] transition-colors duration-150',
+    ].join(' ');
+    addBtn.innerHTML = SVG_PLUS_SM;
+    addBtn.title = 'Add sub-project';
+
+    function _submit() {
+        var val = input.value.trim();
+        if (val && o.onSubmit) {
+            o.onSubmit(o.goalId, val);
+            input.value = '';
+        }
+    }
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); _submit(); }
+    });
+    addBtn.addEventListener('click', _submit);
+
+    row.appendChild(input);
+    row.appendChild(addBtn);
+
+    return row;
 }
