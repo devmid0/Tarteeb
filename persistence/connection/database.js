@@ -110,14 +110,18 @@ export class Database {
             store.createIndex('by-name', 'name');
         }
         
-        // Knowledge pillar stores
+        // Knowledge pillar stores (PKM)
         if (!db.objectStoreNames.contains('knowledge-notes')) {
-            const store = db.createObjectStore('knowledge-notes', { 
+            const store = db.createObjectStore('knowledge-notes', {
                 keyPath: 'id',
-                autoIncrement: true 
+                autoIncrement: true
             });
             store.createIndex('by-tags', 'tags', { multiEntry: true });
             store.createIndex('by-created', 'createdAt');
+            store.createIndex('by-updated', 'updatedAt');
+            store.createIndex('by-category', 'category');
+            store.createIndex('by-archived', 'isArchived');
+            store.createIndex('by-favorited', 'isFavorited');
         }
         
         if (!db.objectStoreNames.contains('knowledge-links')) {
@@ -130,17 +134,20 @@ export class Database {
         
         // Habits pillar stores
         if (!db.objectStoreNames.contains('habits-definitions')) {
-            const store = db.createObjectStore('habits-definitions', { 
+            const store = db.createObjectStore('habits-definitions', {
                 keyPath: 'id',
-                autoIncrement: true 
+                autoIncrement: true
             });
             store.createIndex('by-frequency', 'frequency');
+            store.createIndex('by-category', 'category');
+            store.createIndex('by-archived', 'isArchived');
+            store.createIndex('by-sort-order', 'sortOrder');
         }
-        
+
         if (!db.objectStoreNames.contains('habits-records')) {
-            const store = db.createObjectStore('habits-records', { 
+            const store = db.createObjectStore('habits-records', {
                 keyPath: 'id',
-                autoIncrement: true 
+                autoIncrement: true
             });
             store.createIndex('by-habit-id', 'habitId');
             store.createIndex('by-date', 'date');

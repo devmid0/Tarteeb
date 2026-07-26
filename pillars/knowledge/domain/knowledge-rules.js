@@ -310,6 +310,19 @@ export function sortByCreated(items) {
 }
 
 /**
+ * Sort items by updatedAt descending (most recently modified first),
+ * then by id descending.
+ */
+export function sortByUpdated(items) {
+    return items.slice().sort(function (a, b) {
+        var da = a.updatedAt || a.createdAt || '';
+        var db = b.updatedAt || b.createdAt || '';
+        if (db !== da) return db.localeCompare(da);
+        return (b.id || 0) - (a.id || 0);
+    });
+}
+
+/**
  * Sort items alphabetically by title ascending.
  */
 export function sortByTitle(items) {

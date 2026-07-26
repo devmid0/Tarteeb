@@ -44,8 +44,8 @@ export function createRouter(store, eventBus) {
     );
     
     // Knowledge pillar
-    router.register('/knowledge', () => 
-        import('../../pillars/knowledge/views/knowledge-view.js')
+    router.register('/knowledge', () =>
+        import('../../pillars/knowledge/views/pkm-view.js')
     );
     
     // Habits pillar
