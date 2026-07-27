@@ -37,6 +37,7 @@ export class PKMView {
         this.searchTerm     = '';
         this.activeCategory = null;    /* null = All Notes */
         this.showArchived   = false;
+        this._searchTimer   = null;
     }
 
     /* ── Lifecycle ────────────────────────────────────────── */
@@ -139,6 +140,7 @@ export class PKMView {
     }
 
     unmount() {
+        clearTimeout(this._searchTimer);
         for (var i = 0; i < this._unsubs.length; i++) {
             this._unsubs[i]();
         }
@@ -153,6 +155,7 @@ export class PKMView {
        ================================================================ */
 
     _renderSidebar() {
+        clearTimeout(this._searchTimer);
         var slot = this.container && this.container.querySelector('#pkm-sidebar');
         if (!slot) return;
         slot.innerHTML = '';
@@ -188,7 +191,7 @@ export class PKMView {
             activeCategory:  self.activeCategory,
             search:          self.searchTerm,
             onSelect:        function (id) { self._selectNote(id); },
-            onSearch:        function (term) { self._onSearch(term); },
+            onSearch:        function (term) { self._onSearchInput(term); },
             onCategoryClick: function (path) { self._onCategoryClick(path); },
             onNewNote:       function () { self._onNewNote(); },
             onTogglePin:     function (id) { self._dispatch('TOGGLE_PIN_NOTE', id); },
@@ -251,6 +254,30 @@ export class PKMView {
     _onSearch(term) {
         this.searchTerm = term;
         this._renderSidebar();
+    }
+
+    _onSearchInput(term) {
+        var self = this;
+        clearTimeout(this._searchTimer);
+        this._searchTimer = setTimeout(function () {
+            self.searchTerm = term;
+            self._renderSidebar();
+            self._refocusSearch();
+        }, 150);
+    }
+
+    _refocusSearch() {
+        var input = this.container && this.container.querySelector('#pkm-sidebar .pkm-search');
+        if (input) {
+            input.focus();
+            var len = input.value.length;
+            input.setSelectionRange(len, len);
+        }
+    }
+
+    _isSearchFocused() {
+        var input = this.container && this.container.querySelector('#pkm-sidebar .pkm-search');
+        return document.activeElement === input;
     }
 
     _onCategoryClick(path) {
@@ -341,6 +368,8 @@ export class PKMView {
         var self = this;
 
         var onKnowledgeChanged = function () {
+            var wasSearchFocused = self._isSearchFocused();
+
             /* Sidebar always re-renders on data change.
                Editor only re-renders if the active note was modified
                or if the note list changed shape (new/deleted note). */
@@ -357,6 +386,8 @@ export class PKMView {
             if (sidebarChanged) self._renderSidebar();
             if (editorChanged)  self._renderEditor();
             self._renderStats();
+
+            if (wasSearchFocused) self._refocusSearch();
         };
 
         var onValidationError = function (errors) {

@@ -179,9 +179,12 @@ export class KnowledgeStore {
         data.createdAt = now;
         data.updatedAt = now;
 
-        var validation = validateNote(data);
-        if (!validation.valid) {
-            this.eventBus.publish('knowledge:validation-error', validation.errors);
+        if (data.title && data.title.length > 200) {
+            this.eventBus.publish('knowledge:validation-error', ['Title must be 200 characters or fewer']);
+            return null;
+        }
+        if (data.content && typeof data.content === 'string' && data.content.length > 10000) {
+            this.eventBus.publish('knowledge:validation-error', ['Content must be 10 000 characters or fewer']);
             return null;
         }
 

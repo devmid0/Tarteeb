@@ -54,7 +54,7 @@ export function createTaskForm({ projects = [], onSubmit } = {}) {
     const expandedForm = document.createElement('div');
     expandedForm.className = [
         'rounded-xl bg-surface-raised border border-white/[0.06]',
-        'overflow-hidden max-h-0 opacity-0',
+        'max-h-0 opacity-0',
         'transition-all duration-[300ms] ease-[cubic-bezier(0.45,0,0.55,1)]',
     ].join(' ');
 
@@ -87,7 +87,7 @@ export function createTaskForm({ projects = [], onSubmit } = {}) {
                         <span class="task-priority-label">Medium</span>
                         <svg viewBox="0 0 12 12" fill="currentColor" class="w-3 h-3 opacity-50"><path d="M3 5l3 3 3-3"/></svg>
                     </button>
-                    <div class="task-priority-dropdown hidden absolute left-0 top-full mt-1 z-10
+                    <div class="task-priority-dropdown hidden absolute left-0 top-full mt-1 z-[100]
                                 bg-surface-floating rounded-lg shadow-floating border border-white/[0.06]
                                 py-1 min-w-[120px]" role="listbox">
                         ${Object.entries(PRIORITY).map(([key, val]) => `
@@ -159,6 +159,7 @@ export function createTaskForm({ projects = [], onSubmit } = {}) {
         collapsedRow.classList.add('hidden');
         expandedForm.classList.remove('max-h-0', 'opacity-0');
         expandedForm.classList.add('max-h-[300px]', 'opacity-100');
+        expandedForm.style.overflow = 'visible';
 
         const input = expandedForm.querySelector('.task-title-input');
         requestAnimationFrame(() => input?.focus());
@@ -166,6 +167,7 @@ export function createTaskForm({ projects = [], onSubmit } = {}) {
 
     function collapse() {
         expanded = false;
+        expandedForm.style.overflow = 'hidden';
         expandedForm.classList.add('max-h-0', 'opacity-0');
         expandedForm.classList.remove('max-h-[300px]', 'opacity-100');
         collapsedRow.classList.remove('hidden');

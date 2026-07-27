@@ -150,13 +150,8 @@ export function createNoteList(opts) {
 
     /* ── Wire Search ── */
     var searchInput = el.querySelector('.pkm-search');
-    var debounceTimer = null;
     searchInput.addEventListener('input', function () {
-        clearTimeout(debounceTimer);
-        var val = searchInput.value;
-        debounceTimer = setTimeout(function () {
-            if (o.onSearch) o.onSearch(val);
-        }, 150);
+        if (o.onSearch) o.onSearch(searchInput.value);
     });
 
     return el;
