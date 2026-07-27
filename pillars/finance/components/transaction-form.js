@@ -1,5 +1,5 @@
 /**
- * Life OS — Transaction Form
+ * Tarteeb — Transaction Form
  *
  * Premium inline expandable form for creating transactions.
  * Collapses into a single-row prompt; expands into a polished

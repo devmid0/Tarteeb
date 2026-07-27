@@ -1,5 +1,5 @@
 /**
- * Life OS — Task Edit Modal
+ * Tarteeb — Task Edit Modal
  *
  * Full-task editor rendered into the #modal-portal.
  * Handles title, description, priority, status, due date,

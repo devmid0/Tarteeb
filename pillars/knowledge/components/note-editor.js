@@ -1,5 +1,5 @@
 /**
- * Life OS — Note Editor (Distraction-Free)
+ * Tarteeb — Note Editor (Distraction-Free)
  *
  * Premium editor component for the PKM pillar.
  * Clean, focused editing experience with title, category,

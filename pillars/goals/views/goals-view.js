@@ -1,5 +1,5 @@
 /**
- * Life OS — Goals View (Main Wrapper)
+ * Tarteeb — Goals View (Main Wrapper)
  *
  * Top-level view for the Goals & Projects pillar. Manages section
  * switching (Active / Completed / Statistics), hydration,
@@ -115,10 +115,10 @@ export class GoalsView {
 
         /* Initialise persistence + state for this pillar */
         try {
-            var db = window.__lifeOS && window.__lifeOS.database;
+            var db = window.__tarteeb && window.__tarteeb.database;
             if (db) {
                 var gateway = new GoalsGateway(db);
-                this.store  = new GoalsStore(window.__lifeOS.eventBus, gateway);
+                this.store  = new GoalsStore(window.__tarteeb.eventBus, gateway);
                 await this.store.hydrate();
             }
         } catch (err) {

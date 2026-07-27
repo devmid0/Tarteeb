@@ -1,5 +1,5 @@
 /**
- * Life OS — Finance View (Main Wrapper)
+ * Tarteeb — Finance View (Main Wrapper)
  *
  * Top-level view for the Finance pillar. Manages section
  * switching (Transactions / Budgets / Reports), hydration,
@@ -121,10 +121,10 @@ export class FinanceView {
 
         /* Initialise persistence + state for this pillar */
         try {
-            var db = window.__lifeOS && window.__lifeOS.database;
+            var db = window.__tarteeb && window.__tarteeb.database;
             if (db) {
                 var gateway = new FinanceGateway(db);
-                this.store = new FinanceStore(window.__lifeOS.eventBus, gateway);
+                this.store = new FinanceStore(window.__tarteeb.eventBus, gateway);
                 await this.store.hydrate();
             }
         } catch (err) {

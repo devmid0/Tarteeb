@@ -1,5 +1,5 @@
 /**
- * Life OS — Task Domain Rules
+ * Tarteeb — Task Domain Rules
  *
  * Pure business logic for task management.
  * Zero DOM dependency. Every function is testable in isolation.

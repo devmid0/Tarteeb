@@ -1,5 +1,5 @@
 /**
- * Life OS — Goal Board Component
+ * Tarteeb — Goal Board Component
  *
  * Premium visual board rendering a collection of goals with:
  *   - Dynamic progress bars with animated fill

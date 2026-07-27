@@ -1,5 +1,5 @@
 /**
- * Life OS — Core Application Bootstrap
+ * Tarteeb — Core Application Bootstrap
  *
  * Root module responsible for:
  * 1. Initializing the persistence layer
@@ -8,7 +8,7 @@
  * 4. Activating the router
  * 5. Handling initial route resolution
  *
- * Exposes `window.__lifeOS` for pillar modules that need
+ * Exposes `window.__tarteeb` for pillar modules that need
  * database/eventBus access without circular core imports.
  */
 
@@ -37,7 +37,7 @@ class Application {
             await this.store.hydrate();
 
             /* Expose for pillar lazy-load access */
-            window.__lifeOS = {
+            window.__tarteeb = {
                 database: this.database,
                 eventBus: this.eventBus,
                 store: this.store,
@@ -52,9 +52,9 @@ class Application {
             const initialRoute = window.location.hash.slice(1) || '/dashboard';
             this.router.navigate(initialRoute);
 
-            console.log('[Life OS] Ready');
+            console.log('[Tarteeb] Ready');
         } catch (error) {
-            console.error('[Life OS] Initialization failed:', error);
+            console.error('[Tarteeb] Initialization failed:', error);
             this.handleFatalError(error);
         }
     }
@@ -71,7 +71,7 @@ class Application {
                             </svg>
                         </div>
                         <h1 class="text-xl font-heading font-semibold text-text-primary">Failed to Initialize</h1>
-                        <p class="text-[13px] text-text-secondary leading-relaxed">Life OS could not start. Check the console for details.</p>
+                        <p class="text-[13px] text-text-secondary leading-relaxed">Tarteeb could not start. Check the console for details.</p>
                         <button onclick="location.reload()"
                                 class="px-5 py-2.5 bg-accent-finance text-white text-[13px] font-medium rounded-lg hover:brightness-110 transition-all">
                             Reload

@@ -1,5 +1,5 @@
 /**
- * Life OS — Habits Gateway
+ * Tarteeb — Habits Gateway
  *
  * The SINGLE code path that touches the habits-definitions and
  * habits-records IndexedDB object stores. Every other module

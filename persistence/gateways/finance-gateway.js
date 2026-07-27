@@ -1,5 +1,5 @@
 /**
- * Life OS — Finance Gateway
+ * Tarteeb — Finance Gateway
  *
  * The ONLY code path that touches the finance-transactions and
  * finance-budgets IndexedDB object stores. All other modules

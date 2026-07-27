@@ -1,5 +1,5 @@
 /**
- * Life OS — Goals State Store
+ * Tarteeb — Goals State Store
  *
  * Unidirectional data flow within the Goals pillar:
  *

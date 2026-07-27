@@ -1,5 +1,5 @@
 /**
- * Life OS — Link Form
+ * Tarteeb — Link Form
  *
  * Premium inline expandable form for saving links.
  * Collapses into a single-row prompt; expands into a polished

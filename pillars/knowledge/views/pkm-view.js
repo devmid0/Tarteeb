@@ -1,5 +1,5 @@
 /**
- * Life OS — PKM View (Main Wrapper)
+ * Tarteeb — PKM View (Main Wrapper)
  *
  * Top-level view for the Knowledge / PKM pillar.
  * Two-panel layout: sidebar (note-list) + editor (note-editor).
@@ -128,10 +128,10 @@ export class PKMView {
 
         /* Initialise persistence + state for this pillar */
         try {
-            var db = window.__lifeOS && window.__lifeOS.database;
+            var db = window.__tarteeb && window.__tarteeb.database;
             if (db) {
                 var gateway = new KnowledgeGateway(db);
-                this.store  = new KnowledgeStore(window.__lifeOS.eventBus, gateway);
+                this.store  = new KnowledgeStore(window.__tarteeb.eventBus, gateway);
                 await this.store.hydrate();
             }
         } catch (err) {

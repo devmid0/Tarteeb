@@ -1,5 +1,5 @@
 /**
- * Life OS — Habits View (Main Wrapper)
+ * Tarteeb — Habits View (Main Wrapper)
  *
  * Top-level view for the Habits pillar. Manages section
  * switching (Today / All Habits / Statistics), hydration,
@@ -113,10 +113,10 @@ export class HabitsView {
 
         /* Initialise persistence + state for this pillar */
         try {
-            var db = window.__lifeOS && window.__lifeOS.database;
+            var db = window.__tarteeb && window.__tarteeb.database;
             if (db) {
                 var gateway = new HabitGateway(db);
-                this.store  = new HabitStore(window.__lifeOS.eventBus, gateway);
+                this.store  = new HabitStore(window.__tarteeb.eventBus, gateway);
                 await this.store.hydrate();
             }
         } catch (err) {

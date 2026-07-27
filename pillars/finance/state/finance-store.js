@@ -1,5 +1,5 @@
 /**
- * Life OS — Finance State Store
+ * Tarteeb — Finance State Store
  *
  * Unidirectional data flow within the Finance pillar:
  *

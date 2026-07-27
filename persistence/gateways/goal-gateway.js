@@ -1,5 +1,5 @@
 /**
- * Life OS — Goals Gateway
+ * Tarteeb — Goals Gateway
  *
  * The SINGLE code path that touches the goals-items and
  * goals-milestones IndexedDB object stores. Every other module

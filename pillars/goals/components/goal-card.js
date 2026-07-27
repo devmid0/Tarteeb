@@ -1,5 +1,5 @@
 /**
- * Life OS — Goal Card Component
+ * Tarteeb — Goal Card Component
  *
  * Premium card displaying a goal with progress bar, expandable
  * milestones, inline milestone management, and hover-reveal actions.

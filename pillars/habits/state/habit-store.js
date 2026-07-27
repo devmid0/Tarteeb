@@ -1,5 +1,5 @@
 /**
- * Life OS — Habits State Store
+ * Tarteeb — Habits State Store
  *
  * Unidirectional data flow within the Habits pillar:
  *

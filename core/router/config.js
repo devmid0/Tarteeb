@@ -1,5 +1,5 @@
 /**
- * Life OS — Route Configuration
+ * Tarteeb — Route Configuration
  * 
  * Maps URL paths to pillar view modules.
  * This is the single source of truth for navigation.

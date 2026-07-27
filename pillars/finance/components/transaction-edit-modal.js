@@ -1,5 +1,5 @@
 /**
- * Life OS — Transaction Edit Modal
+ * Tarteeb — Transaction Edit Modal
  *
  * Full transaction editor rendered into the #modal-portal.
  * Handles amount, type, category, date, and description.

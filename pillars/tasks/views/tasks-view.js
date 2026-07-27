@@ -1,5 +1,5 @@
 /**
- * Life OS — Tasks View (Main Wrapper)
+ * Tarteeb — Tasks View (Main Wrapper)
  *
  * Top-level view for the Tasks pillar. Manages section
  * switching (Today / All / Projects), hydration, and
@@ -119,10 +119,10 @@ export class TasksView {
 
         /* Initialise persistence + state for this pillar */
         try {
-            var db = window.__lifeOS && window.__lifeOS.database;
+            var db = window.__tarteeb && window.__tarteeb.database;
             if (db) {
                 var gateway = new TaskGateway(db);
-                this.store = new TaskStore(window.__lifeOS.eventBus, gateway);
+                this.store = new TaskStore(window.__tarteeb.eventBus, gateway);
                 await this.store.hydrate();
             }
         } catch (err) {

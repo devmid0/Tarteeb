@@ -1,5 +1,5 @@
 /**
- * Life OS — Task Card Component
+ * Tarteeb — Task Card Component
  *
  * Single task row. Fully interactive: toggle, inline-edit title,
  * status-cycle, delete, and a context-sensitive edit button.

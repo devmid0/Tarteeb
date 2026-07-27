@@ -1,5 +1,5 @@
 /**
- * Life OS — PKM State Store
+ * Tarteeb — PKM State Store
  *
  * Unidirectional data flow within the Knowledge (PKM) pillar:
  *

@@ -1,5 +1,5 @@
 /**
- * Life OS — Knowledge Filter Bar
+ * Tarteeb — Knowledge Filter Bar
  *
  * Horizontal filter/sort strip above the content list.
  * Provides pill-based quick filters and a sort toggle.

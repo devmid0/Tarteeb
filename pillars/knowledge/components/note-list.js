@@ -1,5 +1,5 @@
 /**
- * Life OS — Note List (Sidebar)
+ * Tarteeb — Note List (Sidebar)
  *
  * Premium sidebar component for the PKM pillar.
  * Displays a structured, searchable list of notes grouped by

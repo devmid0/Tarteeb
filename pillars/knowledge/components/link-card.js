@@ -1,5 +1,5 @@
 /**
- * Life OS — Link Card
+ * Tarteeb — Link Card
  *
  * Premium single-link row with domain favicon, URL domain badge,
  * tag chips, relative date, description preview, and hover-reveal

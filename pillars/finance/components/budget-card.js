@@ -1,5 +1,5 @@
 /**
- * Life OS — Budget Card Component
+ * Tarteeb — Budget Card Component
  *
  * Displays a single budget with its spending progress bar.
  * Shows spent amount, limit, remaining, and percentage.

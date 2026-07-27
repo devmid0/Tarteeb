@@ -1,5 +1,5 @@
 /**
- * Life OS — Task State Store
+ * Tarteeb — Task State Store
  *
  * Unidirectional data flow within the Tasks pillar:
  *

@@ -1,5 +1,5 @@
 /**
- * Life OS — Note Edit Modal
+ * Tarteeb — Note Edit Modal
  *
  * Full note editor rendered into the #modal-portal.
  * Handles title, category, content, tags, and pinned state.

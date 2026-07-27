@@ -1,5 +1,5 @@
 /**
- * Life OS — Note Card
+ * Tarteeb — Note Card
  *
  * Premium single-note row with category icon, pinned indicator,
  * tag chips, relative date, content preview, and hover-reveal

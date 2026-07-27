@@ -1,5 +1,5 @@
 /**
- * Life OS — Goals Domain Rules
+ * Tarteeb — Goals Domain Rules
  *
  * Pure business logic for the Goals pillar. Zero DOM dependency.
  * All constants, validation, and derivations live here.

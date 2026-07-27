@@ -1,5 +1,5 @@
 /**
- * Life OS — Transaction Card
+ * Tarteeb — Transaction Card
  *
  * Premium single-transaction row with type-accented left border,
  * category icon, contextual amount coloring, relative date,

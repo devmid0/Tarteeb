@@ -1,5 +1,5 @@
 /**
- * Life OS — Finance Summary
+ * Tarteeb — Finance Summary
  *
  * Premium stat dashboard: hero balance card + income/expense split.
  * Wire: pass { totals, weekTotals, monthTotals } from the store.

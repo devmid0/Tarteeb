@@ -1,5 +1,5 @@
 /**
- * Life OS — Note Form
+ * Tarteeb — Note Form
  *
  * Premium inline expandable form for creating notes.
  * Collapses into a single-row prompt; expands into a polished

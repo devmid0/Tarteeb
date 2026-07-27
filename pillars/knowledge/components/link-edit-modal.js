@@ -1,5 +1,5 @@
 /**
- * Life OS — Link Edit Modal
+ * Tarteeb — Link Edit Modal
  *
  * Full link editor rendered into the #modal-portal.
  * Handles URL, title, description, and tags.

@@ -1,5 +1,5 @@
 /**
- * Life OS — Dashboard View
+ * Tarteeb — Dashboard View
  *
  * The convergence point: read-only projection hub aggregating
  * live data from all five domain stores. This is NOT a pillar —
@@ -142,8 +142,8 @@ export class DashboardView {
 
     async mount(container) {
         this.container = container;
-        var db = window.__lifeOS && window.__lifeOS.database;
-        var bus = window.__lifeOS && window.__lifeOS.eventBus;
+        var db = window.__tarteeb && window.__tarteeb.database;
+        var bus = window.__tarteeb && window.__tarteeb.eventBus;
         if (!db || !bus) return;
 
         /* Instantiate all 5 gateways + stores */

@@ -1,5 +1,5 @@
 /**
- * Life OS — Knowledge Summary
+ * Tarteeb — Knowledge Summary
  *
  * Premium stat dashboard: hero card + category breakdown.
  * Wire: pass { notes, links, noteTags, linkTags } from the store.

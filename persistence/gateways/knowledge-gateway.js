@@ -1,5 +1,5 @@
 /**
- * Life OS — PKM Gateway
+ * Tarteeb — PKM Gateway
  *
  * The SINGLE code path that touches the knowledge-notes and
  * knowledge-links IndexedDB object stores. Every other module

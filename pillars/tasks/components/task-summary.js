@@ -1,5 +1,5 @@
 /**
- * Life OS — Task Summary Stats
+ * Tarteeb — Task Summary Stats
  *
  * Horizontal row of compact stat cards above the task list.
  * Each card shows a count + label, with subtle color coding

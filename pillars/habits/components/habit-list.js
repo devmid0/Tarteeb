@@ -1,5 +1,5 @@
 /**
- * Life OS — Habit List Component
+ * Tarteeb — Habit List Component
  *
  * Premium list displaying habits with interactive completion toggles,
  * visual streak counters, 7-day mini heatmaps, and hover-reveal actions.

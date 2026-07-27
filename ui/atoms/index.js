@@ -1,5 +1,5 @@
 /**
- * Life OS — UI Atoms
+ * Tarteeb — UI Atoms
  * 
  * Foundational presentational components.
  * These are pillar-agnostic and provide the building blocks for all views.

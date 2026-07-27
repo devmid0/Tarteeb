@@ -1,4 +1,4 @@
-# Life OS — Command-Line Setup
+# Tarteeb — Command-Line Setup
 
 ## Directory Structure Scaffolding
 
@@ -48,7 +48,7 @@ mkdir -p pillars/dashboard/views
 ## Project Structure
 
 ```
-life-os/
+tarteeb/
 ├── index.html                    # Entry point
 ├── core/                         # Layer 0: Core infrastructure
 │   ├── main.js                   # Application bootstrap

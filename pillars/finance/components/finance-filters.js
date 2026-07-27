@@ -1,5 +1,5 @@
 /**
- * Life OS — Finance Filter Bar
+ * Tarteeb — Finance Filter Bar
  *
  * Horizontal filter/sort strip above the transaction list.
  * Provides pill-based quick filters and a sort toggle.

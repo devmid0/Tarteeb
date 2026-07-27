@@ -1,5 +1,5 @@
 /**
- * Life OS — Finance Domain Rules
+ * Tarteeb — Finance Domain Rules
  *
  * Pure business logic for financial management.
  * Zero DOM dependency. Every function is testable in isolation.

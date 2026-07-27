@@ -1,5 +1,5 @@
 /**
- * Life OS — Core Router
+ * Tarteeb — Core Router
  * 
  * Hash-based single-page router for pillar navigation.
  * 
@@ -147,7 +147,7 @@ export class Router {
                         Page Not Found
                     </h1>
                     <p class="text-text-secondary">
-                        The path "/${path}" does not exist in Life OS.
+                        The path "/${path}" does not exist in Tarteeb.
                     </p>
                     <button onclick="window.location.hash='/dashboard'" 
                             class="px-6 py-3 bg-accent-finance text-white rounded-lg hover:bg-opacity-90 transition-all">

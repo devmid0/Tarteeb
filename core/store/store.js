@@ -1,5 +1,5 @@
 /**
- * Life OS — Core Store
+ * Tarteeb — Core Store
  * 
  * Global state management for pillar-agnostic concerns.
  * 

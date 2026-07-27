@@ -1,5 +1,5 @@
 /**
- * Life OS — Application Shell
+ * Tarteeb — Application Shell
  *
  * Premium chrome persisting across all navigation.
  * Sidebar collapses to icon-rail on desktop, converts to bottom
@@ -117,7 +117,7 @@ export class Shell {
                     '<span class="text-white font-heading font-bold text-[13px] select-none">L</span>' +
                 '</div>' +
                 (showLabel
-                    ? '<span class="ml-3 text-[15px] font-heading font-semibold text-text-primary tracking-tight whitespace-nowrap">Life OS</span>'
+                    ? '<span class="ml-3 text-[15px] font-heading font-semibold text-text-primary tracking-tight whitespace-nowrap">Tarteeb</span>'
                     : '') +
             '</div>';
 

@@ -1,5 +1,5 @@
 /**
- * Life OS — Habit Creation Form
+ * Tarteeb — Habit Creation Form
  *
  * Inline expandable form that appears within the habit list.
  * It expands from a single-line trigger into a full form with

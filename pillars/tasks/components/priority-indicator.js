@@ -1,5 +1,5 @@
 /**
- * Life OS — Priority Indicator
+ * Tarteeb — Priority Indicator
  *
  * Tiny visual element communicating task urgency through
  * color, icon, and a subtle pulse for critical items.

@@ -1,5 +1,5 @@
 /**
- * Life OS — Knowledge Domain Rules
+ * Tarteeb — Knowledge Domain Rules
  *
  * Pure business logic for knowledge management.
  * Zero DOM dependency. Every function is testable in isolation.

@@ -1,5 +1,5 @@
 /**
- * Life OS — Core Event Bus
+ * Tarteeb — Core Event Bus
  * 
  * Centralized publish-subscribe system for cross-pillar communication.
  * This is the ONLY sanctioned mechanism for inter-pillar messaging.

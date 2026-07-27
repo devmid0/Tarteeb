@@ -1,5 +1,5 @@
 /**
- * Life OS — Knowledge View (Main Wrapper)
+ * Tarteeb — Knowledge View (Main Wrapper)
  *
  * Top-level view for the Knowledge pillar. Manages section
  * switching (Notes / Links), hydration, and the shared
@@ -122,10 +122,10 @@ export class KnowledgeView {
         this.container = container;
 
         /* Initialise persistence + state for this pillar */
-        var db = window.__lifeOS && window.__lifeOS.database;
+        var db = window.__tarteeb && window.__tarteeb.database;
         if (db) {
             var gateway = new KnowledgeGateway(db);
-            this.store = new KnowledgeStore(window.__lifeOS.eventBus, gateway);
+            this.store = new KnowledgeStore(window.__tarteeb.eventBus, gateway);
             await this.store.hydrate();
         }
 

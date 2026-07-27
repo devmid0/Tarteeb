@@ -1,5 +1,5 @@
 /**
- * Life OS — Task Gateway
+ * Tarteeb — Task Gateway
  *
  * The ONLY code path that touches the tasks-items and tasks-projects
  * IndexedDB object stores. All other modules call through this gateway.

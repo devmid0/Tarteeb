@@ -1,5 +1,5 @@
 /**
- * Life OS — Goal Form Component
+ * Tarteeb — Goal Form Component
  *
  * Dual-mode modular form for:
  *   1. Creating high-level goals (mode: 'goal')

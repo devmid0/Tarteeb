@@ -1,5 +1,5 @@
 /**
- * Life OS — Database Connection
+ * Tarteeb — Database Connection
  * 
  * IndexedDB connection manager for local-first persistence.
  * 
@@ -23,7 +23,7 @@
  * - goals-milestones: Milestone markers
  */
 
-const DB_NAME = 'life-os';
+const DB_NAME = 'tarteeb';
 const DB_VERSION = 1;
 
 export class Database {

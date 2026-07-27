@@ -1,5 +1,5 @@
 /**
- * Life OS — Task Filter Bar
+ * Tarteeb — Task Filter Bar
  *
  * Horizontal filter/sort strip above the task list.
  * Provides pill-based quick filters and a sort toggle.
