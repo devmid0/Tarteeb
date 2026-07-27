@@ -54,6 +54,8 @@ const EXPANDED_W  = 220;
 const HOVER_REVERT_MS = 350;
 const MOBILE_BP = 768;
 
+import { QuickCapture } from '../../ui/composites/quick-capture.js';
+
 export class Shell {
     constructor(store, eventBus) {
         this.store     = store;
@@ -66,6 +68,7 @@ export class Shell {
 
         this._hoverTimer      = null;
         this._expandedByHover = false;
+        this._quickCapture    = null;
 
         this._onResize = this._onResize.bind(this);
         this._onHash   = this._onHash.bind(this);
@@ -78,9 +81,21 @@ export class Shell {
         window.addEventListener('resize', this._onResize);
         window.addEventListener('hashchange', this._onHash);
         this.eventBus.subscribe('router:navigated', () => this._syncActive());
+
+        /* Global Quick Capture — lives for the entire app lifetime */
+        var db = window.__tarteeb && window.__tarteeb.database;
+        if (db) {
+            this._quickCapture = new QuickCapture();
+            this._quickCapture.init(db, this.eventBus);
+            window.__tarteeb.quickCapture = this._quickCapture;
+        }
     }
 
     destroy() {
+        if (this._quickCapture) {
+            this._quickCapture.destroy();
+            this._quickCapture = null;
+        }
         window.removeEventListener('resize', this._onResize);
         window.removeEventListener('hashchange', this._onHash);
         clearTimeout(this._hoverTimer);
@@ -183,8 +198,8 @@ export class Shell {
         this.mainEl.style.paddingBottom = '';
 
         var html =
-            '<nav class="fixed bottom-0 inset-x-0 z-40 glass border-t border-white/[0.06] ' +
-                    'flex items-stretch justify-around h-14 px-1 safe-area-bottom"' +
+            '<nav class="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/[0.06] ' +
+                    'flex items-stretch h-14 px-1 safe-area-bottom"' +
                  ' aria-label="Pillar navigation">';
 
         for (var i = 0; i < PILLARS.length; i++) {
@@ -192,13 +207,17 @@ export class Shell {
             var active = activePillar === p.id;
             var colorClass = p.color ? 'text-' + p.color : 'text-text-tertiary';
             var activeColor = active ? colorClass : 'text-text-tertiary';
+            var activeIndicator = active
+                ? ' relative before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 ' +
+                  'before:w-5 before:h-0.5 before:rounded-b-full ' +
+                  (p.color ? 'before:bg-' + p.color : 'before:bg-text-tertiary')
+                : '';
 
             html +=
                 '<a href="#/' + p.id + '"' +
-                   ' class="flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ' + activeColor + '"' +
+                   ' class="flex items-center justify-center flex-1 transition-colors duration-200 ' + activeColor + activeIndicator + '"' +
                    ' aria-current="' + (active ? 'page' : 'false') + '">' +
                     p.svg +
-                    '<span class="text-[10px] mt-0.5 font-medium">' + p.label + '</span>' +
                 '</a>';
         }
 

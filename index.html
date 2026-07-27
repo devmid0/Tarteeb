@@ -100,6 +100,135 @@
             border-radius: 6px;
         }
 
+        /* ── Global Smooth Transitions ─────────────────────── */
+        #viewport {
+            transition: opacity 220ms ease, transform 220ms ease;
+        }
+        #viewport.vp-exiting {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        #viewport.vp-entering {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        /* ── Interactive Card Utilities ────────────────────── */
+        .dash-card {
+            transition: transform 220ms cubic-bezier(0.45,0,0.55,1),
+                        box-shadow 220ms cubic-bezier(0.45,0,0.55,1),
+                        border-color 220ms ease,
+                        background-color 150ms ease;
+        }
+        .dash-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.07);
+        }
+        .dash-card:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* ── Interactive Row Utility ───────────────────────── */
+        .dash-row {
+            transition: background-color 120ms ease, transform 180ms cubic-bezier(0.45,0,0.55,1);
+        }
+        .dash-row:hover {
+            transform: translateX(2px);
+        }
+
+        /* ── Custom Task Checkbox ─────────────────────────── */
+        .task-checkbox {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(113, 113, 122, 0.5);
+            background: transparent;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: border-color 200ms ease, background-color 200ms ease, transform 150ms cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .task-checkbox:hover {
+            border-color: rgba(52, 211, 153, 0.6);
+            transform: scale(1.1);
+        }
+        .task-checkbox:active {
+            transform: scale(0.9);
+        }
+        .task-checkbox::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: #34d399;
+            transform: translate(-50%, -50%);
+            transition: width 200ms cubic-bezier(0.34,1.56,0.64,1), height 200ms cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .task-checkbox.is-checked {
+            border-color: #34d399;
+        }
+        .task-checkbox.is-checked::after {
+            width: 18px;
+            height: 18px;
+        }
+        .task-checkbox .checkmark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 200ms cubic-bezier(0.34,1.56,0.64,1) 80ms, opacity 150ms ease 80ms;
+            pointer-events: none;
+        }
+        .task-checkbox.is-checked .checkmark {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        /* ── Task Completion Reward Animation ─────────────── */
+        .task-row {
+            transition: opacity 300ms ease, transform 300ms cubic-bezier(0.45,0,0.55,1);
+        }
+        .task-row.is-completing {
+            animation: task-complete-reward 400ms cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        .task-row.is-done {
+            opacity: 0.45;
+            transform: scale(0.98);
+        }
+        .task-row.is-done .task-title {
+            text-decoration: line-through;
+            text-decoration-color: rgba(113, 113, 122, 0.4);
+            text-decoration-thickness: 1.5px;
+        }
+        @keyframes task-complete-reward {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.015); }
+            100% { transform: scale(0.98); opacity: 0.45; }
+        }
+
+        /* ── Inline Edit Input ────────────────────────────── */
+        .task-inline-edit {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.4;
+            color: #f4f4f5;
+            width: 100%;
+            padding: 0;
+            border-bottom: 1.5px solid rgba(52, 211, 153, 0.4);
+        }
+        .task-inline-edit:focus {
+            border-bottom-color: #34d399;
+        }
+
         .glass {
             background: rgba(22, 22, 25, 0.85);
             backdrop-filter: blur(16px) saturate(1.2);
@@ -110,6 +239,90 @@
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+        /* Quick Capture FAB — avoid mobile bottom bar overlap */
+        @media (max-width: 767px) {
+            #dash-qc-fab { bottom: 72px !important; }
+            #qc-global-fab { bottom: 72px !important; }
+
+            /* Toast container — lift above bottom nav */
+            #toast-container {
+                bottom: 72px !important;
+                right: 16px !important;
+            }
+        }
+
+        /* ── Mobile Bottom Nav ────────────────────────────── */
+        @media (max-width: 767px) {
+            /* Hide desktop sidebar width — content takes full width */
+            #sidebar {
+                width: 0 !important;
+                border: none !important;
+                overflow: hidden;
+            }
+
+            /* Hide text labels in bottom nav — icon only */
+            #sidebar nav a > span:last-child {
+                display: none;
+            }
+
+            /* Bottom nav icon sizing — slightly larger touch targets */
+            #sidebar nav a svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            /* Active pill — top indicator bar for bottom nav */
+            #sidebar nav a[aria-current="page"]::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 20px;
+                height: 2px;
+                border-radius: 0 0 2px 2px;
+                background: currentColor;
+            }
+
+            /* Main content — full width, bottom padding for nav clearance */
+            #main-content {
+                width: 100% !important;
+                padding-bottom: 56px;
+            }
+
+            /* Viewport — safe scroll area above bottom nav */
+            #viewport {
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+
+            /* Dashboard cards — reduce horizontal padding on small screens */
+            .dash-card {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+        }
+
+        /* Quick Capture overlay backdrop blur fallback */
+        #dash-qc-overlay,
+        #qc-overlay {
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+        }
+
+        /* FAB pulse glow on idle */
+        @keyframes fab-glow {
+            0%, 100% { box-shadow: 0 8px 24px rgba(52,211,153,0.15); }
+            50%      { box-shadow: 0 8px 32px rgba(52,211,153,0.25); }
+        }
+        #dash-qc-trigger,
+        #qc-global-trigger {
+            animation: fab-glow 4s ease-in-out infinite;
+        }
+        #dash-qc-trigger:hover,
+        #qc-global-trigger:hover {
+            animation: none;
+        }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {

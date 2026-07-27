@@ -60,11 +60,12 @@ export function createTaskCard(task, callbacks) {
     var isEditing  = false;
 
     el.className = [
-        'group relative flex items-start gap-3 px-4 py-3 rounded-xl',
+        'task-row group relative flex items-start gap-3 px-4 py-3 rounded-xl',
         'bg-surface-raised/50 hover:bg-surface-elevated/70',
         'border border-transparent hover:border-white/[0.04]',
         isOverdue ? 'border-l-2 border-l-status-error/60' : '',
         'transition-all duration-[200ms]',
+        isDone ? 'is-done' : '',
     ].join(' ');
 
     /* ── Checkbox ── */
@@ -73,22 +74,19 @@ export function createTaskCard(task, callbacks) {
     checkbox.role = 'checkbox';
     checkbox.setAttribute('aria-checked', String(isDone));
     checkbox.setAttribute('aria-label', 'Toggle completion');
-    checkbox.className = [
-        'flex-shrink-0 mt-[3px] w-[18px] h-[18px] rounded-md',
-        'border-[1.5px] flex items-center justify-center',
-        'transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-accent-tasks/40 focus:ring-offset-1 focus:ring-offset-surface-canvas',
-        isDone
-            ? 'bg-accent-tasks border-accent-tasks scale-100'
-            : 'border-text-tertiary hover:border-text-secondary hover:scale-105',
-    ].join(' ');
-
-    checkbox.innerHTML = isDone
-        ? '<svg viewBox="0 0 14 14" fill="none" class="w-3 h-3"><path d="M3 7.5l3 3 5.5-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        : '';
+    checkbox.className = 'task-checkbox' + (isDone ? ' is-checked' : '');
+    checkbox.innerHTML = '<svg class="checkmark" viewBox="0 0 12 12" fill="none" width="10" height="10">' +
+        '<path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     checkbox.addEventListener('click', function (e) {
         e.stopPropagation();
+        /* Completion reward animation */
+        if (!isDone) {
+            el.classList.add('is-completing');
+            setTimeout(function () {
+                el.classList.remove('is-completing');
+            }, 400);
+        }
         if (cbs.onToggle) cbs.onToggle(task.id);
     });
 
@@ -103,15 +101,15 @@ export function createTaskCard(task, callbacks) {
     /* Title (click to inline-edit) */
     var title = document.createElement('h4');
     title.className = [
-        'text-[13px] font-medium leading-snug',
+        'task-title text-[13px] font-medium leading-snug',
         'transition-all duration-300',
-        isDone ? 'line-through text-text-disabled' : 'text-text-primary',
+        isDone ? 'text-text-disabled' : 'text-text-primary',
         !isDone ? 'cursor-pointer hover:text-accent-tasks' : '',
     ].join(' ');
     title.textContent = task.title || 'Untitled task';
 
     if (!isDone && cbs.onUpdate) {
-        title.addEventListener('dblclick', function (e) {
+        title.addEventListener('click', function (e) {
             e.stopPropagation();
             startInlineEdit();
         });
@@ -153,11 +151,9 @@ export function createTaskCard(task, callbacks) {
     /* ── Inline Edit Field ── */
     var editRow = document.createElement('div');
     editRow.className = 'mt-2 hidden';
-    editRow.innerHTML =
-        '<input type="text" class="inline-edit-input w-full bg-surface-elevated text-[13px] text-text-primary ' +
-        'px-3 py-1.5 rounded-lg border border-white/[0.08] focus:outline-none focus:border-accent-tasks/50" maxlength="200">';
+    editRow.innerHTML = '<input type="text" class="task-inline-edit" maxlength="200">';
 
-    var editInput = editRow.querySelector('.inline-edit-input');
+    var editInput = editRow.querySelector('.task-inline-edit');
     editInput.value = task.title;
 
     editInput.addEventListener('keydown', function (e) {

@@ -103,6 +103,10 @@ export class Router {
             // Dynamically import the view module
             const viewModule = await viewLoader();
             
+            // Fluid exit transition
+            this.viewport.classList.add('vp-exiting');
+            await new Promise(function (r) { setTimeout(r, 220); });
+            
             // Unmount current view
             if (this.currentView && this.currentView.unmount) {
                 this.currentView.unmount();
@@ -117,6 +121,12 @@ export class Router {
             this.viewport.innerHTML = '';
             this.viewport.appendChild(fragment);
             
+            // Enter transition
+            this.viewport.classList.remove('vp-exiting');
+            this.viewport.classList.add('vp-entering');
+            this.viewport.offsetHeight; // force reflow
+            this.viewport.classList.remove('vp-entering');
+            
             if (this.currentView.mount) {
                 await this.currentView.mount(this.viewport);
             }
@@ -129,6 +139,7 @@ export class Router {
             });
             
         } catch (error) {
+            this.viewport.classList.remove('vp-exiting', 'vp-entering');
             console.error(`[Router] Failed to load view for "${pillar}":`, error);
             this.renderError(pillar, error);
         }
