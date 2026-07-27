@@ -88,7 +88,8 @@ export function createNoteList(opts) {
         'transition-all duration-200',
     ].join(' ');
     newBtn.innerHTML = SVG_PLUS + '<span>New Note</span>';
-    newBtn.addEventListener('click', function () {
+    newBtn.addEventListener('click', function (e) {
+        e.preventDefault();
         if (o.onNewNote) o.onNewNote();
     });
     newBtnSection.appendChild(newBtn);

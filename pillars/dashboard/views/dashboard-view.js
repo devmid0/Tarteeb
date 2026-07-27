@@ -156,11 +156,11 @@ export class DashboardView {
         /* Subscribe to all 5 change streams */
         var self = this;
         this._unsubs.push(
-            bus.subscribe('tasks:changed',     function () { self._refreshWidget('tasks'); }),
-            bus.subscribe('finance:changed',   function () { self._refreshWidget('finance'); }),
-            bus.subscribe('knowledge:changed', function () { self._refreshWidget('knowledge'); }),
-            bus.subscribe('habits:changed',    function () { self._refreshWidget('habits'); }),
-            bus.subscribe('goals:changed',     function () { self._refreshWidget('goals'); }),
+            bus.subscribe('tasks:changed',     function () { self._refreshWidget('tasks'); self._refreshSummaryBar(); }),
+            bus.subscribe('finance:changed',   function () { self._refreshWidget('finance'); self._refreshSummaryBar(); }),
+            bus.subscribe('knowledge:changed', function () { self._refreshWidget('knowledge'); self._refreshSummaryBar(); }),
+            bus.subscribe('habits:changed',    function () { self._refreshWidget('habits'); self._refreshSummaryBar(); }),
+            bus.subscribe('goals:changed',     function () { self._refreshWidget('goals'); self._refreshSummaryBar(); }),
         );
 
         /* Hydrate all 5 stores in parallel */
@@ -227,10 +227,10 @@ export class DashboardView {
         ));
 
         /* Finance */
-        var monthTotals = s.finance ? s.finance.getMonthTotals() : { expense: 0, income: 0 };
+        var monthTotals = s.finance ? s.finance.getMonthTotals() : { expenses: 0, income: 0 };
         bar.appendChild(_summaryCard(
             '\u00A5', 'Finance', 'accent-finance',
-            _formatCurrency(monthTotals.expense),
+            _formatCurrency(monthTotals.expenses),
             'spent this month',
             '/finance'
         ));
@@ -373,7 +373,7 @@ function _renderFinanceWidget(slot, store) {
     heroRow.className = 'grid grid-cols-3 gap-3 mb-4';
 
     heroRow.appendChild(_financeStatCell('Income', monthTotals.income, 'text-status-success'));
-    heroRow.appendChild(_financeStatCell('Expenses', monthTotals.expense, 'text-status-error'));
+    heroRow.appendChild(_financeStatCell('Expenses', monthTotals.expenses, 'text-status-error'));
     heroRow.appendChild(_financeStatCell('Net', monthTotals.net, monthTotals.net >= 0 ? 'text-status-success' : 'text-status-error'));
 
     slot.appendChild(heroRow);
@@ -388,7 +388,7 @@ function _renderFinanceWidget(slot, store) {
     weekRow.className = 'flex items-center gap-4 mb-4';
     weekRow.innerHTML =
         '<span class="text-[12px] text-text-secondary">\u2191 ' + _formatCurrency(weekTotals.income) + ' <span class="text-text-disabled">in</span></span>' +
-        '<span class="text-[12px] text-text-secondary">\u2193 ' + _formatCurrency(weekTotals.expense) + ' <span class="text-text-disabled">out</span></span>';
+        '<span class="text-[12px] text-text-secondary">\u2193 ' + _formatCurrency(weekTotals.expenses) + ' <span class="text-text-disabled">out</span></span>';
     slot.appendChild(weekRow);
 
     /* Budget bars (max 3) */

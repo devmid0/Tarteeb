@@ -56,7 +56,7 @@ export function createTransactionForm(opts) {
     var panel = document.createElement('div');
     panel.className = [
         'rounded-xl bg-surface-raised border border-white/[0.06]',
-        'overflow-hidden max-h-0 opacity-0',
+        'max-h-0 opacity-0',
         'transition-all duration-[300ms] ease-[cubic-bezier(0.45,0,0.55,1)]',
     ].join(' ');
 
@@ -70,6 +70,7 @@ export function createTransactionForm(opts) {
         trigger.classList.add('hidden');
         panel.classList.remove('max-h-0', 'opacity-0');
         panel.classList.add('max-h-[500px]', 'opacity-100');
+        panel.style.overflow = 'visible';
         _setDefaultDate();
         _syncTypeUI();
         var amt = panel.querySelector('.f-amount');
@@ -78,6 +79,7 @@ export function createTransactionForm(opts) {
 
     function collapse() {
         expanded = false;
+        panel.style.overflow = 'hidden';
         panel.classList.add('max-h-0', 'opacity-0');
         panel.classList.remove('max-h-[500px]', 'opacity-100');
         trigger.classList.remove('hidden');
@@ -331,7 +333,7 @@ function _buildFormHTML() {
                     '<span>Expense</span>' +
                     '<svg viewBox="0 0 12 12" fill="currentColor" class="w-3 h-3 opacity-40 ml-auto"><path d="M3 5l3 3 3-3"/></svg>' +
                 '</button>' +
-                '<div class="f-type-drop hidden absolute left-0 top-full mt-1.5 z-20' +
+                '<div class="f-type-drop hidden absolute left-0 top-full mt-1.5 z-[100]' +
                             ' bg-surface-floating rounded-xl shadow-floating border border-white/[0.08]' +
                             ' py-1.5 w-full max-w-[200px]">' +
                     '<button type="button" data-type="expense"' +
