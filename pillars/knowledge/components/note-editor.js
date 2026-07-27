@@ -328,7 +328,7 @@ export function createNoteEditor(opts) {
                     tags:       existingTags.slice(),
                 });
             }
-        }, 300);
+        }, 500);
     }
 
     titleInput.addEventListener('input', function () {

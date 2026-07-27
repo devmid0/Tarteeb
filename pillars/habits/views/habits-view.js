@@ -112,11 +112,15 @@ export class HabitsView {
         this.container = container;
 
         /* Initialise persistence + state for this pillar */
-        var db = window.__lifeOS && window.__lifeOS.database;
-        if (db) {
-            var gateway = new HabitGateway(db);
-            this.store  = new HabitStore(window.__lifeOS.eventBus, gateway);
-            await this.store.hydrate();
+        try {
+            var db = window.__lifeOS && window.__lifeOS.database;
+            if (db) {
+                var gateway = new HabitGateway(db);
+                this.store  = new HabitStore(window.__lifeOS.eventBus, gateway);
+                await this.store.hydrate();
+            }
+        } catch (err) {
+            console.error('[Habits] Failed to initialise store:', err);
         }
 
         this._renderSection();

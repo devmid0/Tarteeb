@@ -114,11 +114,15 @@ export class GoalsView {
         this.container = container;
 
         /* Initialise persistence + state for this pillar */
-        var db = window.__lifeOS && window.__lifeOS.database;
-        if (db) {
-            var gateway = new GoalsGateway(db);
-            this.store  = new GoalsStore(window.__lifeOS.eventBus, gateway);
-            await this.store.hydrate();
+        try {
+            var db = window.__lifeOS && window.__lifeOS.database;
+            if (db) {
+                var gateway = new GoalsGateway(db);
+                this.store  = new GoalsStore(window.__lifeOS.eventBus, gateway);
+                await this.store.hydrate();
+            }
+        } catch (err) {
+            console.error('[Goals] Failed to initialise store:', err);
         }
 
         this._renderSection();

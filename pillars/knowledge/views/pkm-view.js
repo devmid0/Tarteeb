@@ -38,6 +38,7 @@ export class PKMView {
         this.activeCategory = null;    /* null = All Notes */
         this.showArchived   = false;
         this._searchTimer   = null;
+        this._selfUpdating  = false;
     }
 
     /* ── Lifecycle ────────────────────────────────────────── */
@@ -126,11 +127,15 @@ export class PKMView {
         this.container = container;
 
         /* Initialise persistence + state for this pillar */
-        var db = window.__lifeOS && window.__lifeOS.database;
-        if (db) {
-            var gateway = new KnowledgeGateway(db);
-            this.store  = new KnowledgeStore(window.__lifeOS.eventBus, gateway);
-            await this.store.hydrate();
+        try {
+            var db = window.__lifeOS && window.__lifeOS.database;
+            if (db) {
+                var gateway = new KnowledgeGateway(db);
+                this.store  = new KnowledgeStore(window.__lifeOS.eventBus, gateway);
+                await this.store.hydrate();
+            }
+        } catch (err) {
+            console.error('[Knowledge] Failed to initialise store:', err);
         }
 
         this._renderSidebar();
@@ -219,7 +224,7 @@ export class PKMView {
             note:         note,
             categories:   store.getAllCategoryPaths(),
             categoryMeta: CATEGORY_META,
-            onSave:       function (patch) { self._dispatch('UPDATE_NOTE', patch); },
+            onSave:       function (patch) { self._selfUpdating = true; self._dispatch('UPDATE_NOTE', patch); self._selfUpdating = false; },
             onPin:        function (id)    { self._dispatch('TOGGLE_PIN_NOTE', id); },
             onFavorite:   function (id)    { self._dispatch('TOGGLE_FAVORITE_NOTE', id); },
             onArchive:    function (id)    { self._dispatch('ARCHIVE_NOTE', id); },
@@ -384,7 +389,7 @@ export class PKMView {
             }
 
             if (sidebarChanged) self._renderSidebar();
-            if (editorChanged)  self._renderEditor();
+            if (editorChanged && !self._selfUpdating)  self._renderEditor();
             self._renderStats();
 
             if (wasSearchFocused) self._refocusSearch();

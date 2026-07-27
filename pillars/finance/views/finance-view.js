@@ -120,11 +120,15 @@ export class FinanceView {
         this.container = container;
 
         /* Initialise persistence + state for this pillar */
-        var db = window.__lifeOS && window.__lifeOS.database;
-        if (db) {
-            var gateway = new FinanceGateway(db);
-            this.store = new FinanceStore(window.__lifeOS.eventBus, gateway);
-            await this.store.hydrate();
+        try {
+            var db = window.__lifeOS && window.__lifeOS.database;
+            if (db) {
+                var gateway = new FinanceGateway(db);
+                this.store = new FinanceStore(window.__lifeOS.eventBus, gateway);
+                await this.store.hydrate();
+            }
+        } catch (err) {
+            console.error('[Finance] Failed to initialise store:', err);
         }
 
         this._renderSection();

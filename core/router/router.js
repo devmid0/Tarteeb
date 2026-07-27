@@ -118,7 +118,7 @@ export class Router {
             this.viewport.appendChild(fragment);
             
             if (this.currentView.mount) {
-                this.currentView.mount(this.viewport);
+                await this.currentView.mount(this.viewport);
             }
             
             // Publish navigation event

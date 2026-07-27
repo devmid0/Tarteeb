@@ -160,11 +160,12 @@ export class Store {
      */
     async persist() {
         const preferences = {
+            id: 'user',
             theme: this.state.theme,
             sidebar: this.state.sidebar,
         };
         
-        await this.database.save('app-preferences', 'user', preferences);
+        await this.database.update('app-preferences', preferences);
     }
 
     /**

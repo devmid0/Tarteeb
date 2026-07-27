@@ -118,11 +118,15 @@ export class TasksView {
         this.container = container;
 
         /* Initialise persistence + state for this pillar */
-        var db = window.__lifeOS && window.__lifeOS.database;
-        if (db) {
-            var gateway = new TaskGateway(db);
-            this.store = new TaskStore(window.__lifeOS.eventBus, gateway);
-            await this.store.hydrate();
+        try {
+            var db = window.__lifeOS && window.__lifeOS.database;
+            if (db) {
+                var gateway = new TaskGateway(db);
+                this.store = new TaskStore(window.__lifeOS.eventBus, gateway);
+                await this.store.hydrate();
+            }
+        } catch (err) {
+            console.error('[Tasks] Failed to initialise store:', err);
         }
 
         this._renderSection();
