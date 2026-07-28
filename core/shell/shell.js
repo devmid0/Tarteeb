@@ -202,6 +202,37 @@ export class Shell {
                         : '') +
                 '</button>';
 
+        /* Export button */
+        html +=
+                '<button id="export-btn"' +
+                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                               'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200" title="Export Backup (JSON)">' +
+                    '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
+                        '<path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/>' +
+                        '<path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/>' +
+                    '</svg>' +
+                    (showLabel
+                        ? '<span class="text-[13px] font-medium whitespace-nowrap">Export Backup</span>'
+                        : '') +
+                '</button>';
+
+        /* Import button */
+        html +=
+                '<button id="import-btn"' +
+                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                               'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200" title="Import Backup">' +
+                    '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
+                        '<path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 101.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636V13.25z"/>' +
+                        '<path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/>' +
+                    '</svg>' +
+                    (showLabel
+                        ? '<span class="text-[13px] font-medium whitespace-nowrap">Import Backup</span>'
+                        : '') +
+                '</button>';
+
+        /* Hidden file input for import */
+        html += '<input type="file" accept=".json" id="import-file-input" style="display:none">';
+
         /* Collapse toggle */
         html +=
                 '<button id="sidebar-toggle"' +
@@ -277,6 +308,24 @@ export class Shell {
             });
         }
 
+        var exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function () {
+                self.exportLocalData();
+            });
+        }
+
+        var importBtn = document.getElementById('import-btn');
+        var importFile = document.getElementById('import-file-input');
+        if (importBtn && importFile) {
+            importBtn.addEventListener('click', function () {
+                importFile.click();
+            });
+            importFile.addEventListener('change', function (e) {
+                self.importLocalData(e);
+            });
+        }
+
         if (!this._isMobile()) {
             this.sidebarEl.addEventListener('mouseenter', function () {
                 clearTimeout(self._hoverTimer);
@@ -309,8 +358,7 @@ export class Shell {
         var self = this;
         if (btn.classList.contains('syncing')) return;
 
-        import('../../ui/composites/cloud-sync.js').then(function (mod) {
-            var wasSyncing = false;
+        import('../composites/cloud-sync.js').then(async function (mod) {
             btn.classList.add('syncing');
             btn.disabled = true;
             btn.innerHTML =
@@ -319,22 +367,134 @@ export class Shell {
                 '</svg>' +
                 '<span class="text-[13px] font-medium whitespace-nowrap">Syncing…</span>';
 
-            mod.syncToCloud()
-                .then(function () { return mod.syncFromCloud(); })
-                .catch(function () {})
-                .finally(function () {
-                    btn.classList.remove('syncing');
-                    btn.disabled = false;
-                    var showLabel = !self.store.get('sidebar.collapsed') && !self._isMobile();
-                    btn.innerHTML =
-                        '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
-                            '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
-                        '</svg>' +
-                        (showLabel
-                            ? '<span class="text-[13px] font-medium whitespace-nowrap">Sync Now</span>'
-                            : '');
-                });
+            /* Push local data to cloud */
+            var db = window.__tarteeb && window.__tarteeb.database;
+            if (db) {
+                var localData = await db.exportAll();
+                await mod.syncToCloud(localData);
+            }
+
+            /* Pull cloud data into local */
+            var cloudData = await mod.syncFromCloud();
+            if (cloudData && db) {
+                await db.importAll(cloudData);
+            }
+
+            btn.classList.remove('syncing');
+            btn.disabled = false;
+            var showLabel = !self.store.get('sidebar.collapsed') && !self._isMobile();
+            btn.innerHTML =
+                '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
+                    '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
+                '</svg>' +
+                (showLabel
+                    ? '<span class="text-[13px] font-medium whitespace-nowrap">Sync Now</span>'
+                    : '');
         });
+    }
+
+    /* ── Data Export / Import ─────────────────────────────── */
+
+    /**
+     * Export all IndexedDB pillar data plus relevant localStorage
+     * keys as a single JSON file download.
+     */
+    async exportLocalData() {
+        try {
+            var db = window.__tarteeb && window.__tarteeb.database;
+            if (!db) {
+                alert('Database not available. Nothing to export.');
+                return;
+            }
+
+            /* Gather IndexedDB stores */
+            var storeData = await db.exportAll();
+
+            /* Gather tarteeb-prefixed localStorage keys */
+            var lsData = {};
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key && key.indexOf('tarteeb_') === 0) {
+                    lsData[key] = localStorage.getItem(key);
+                }
+            }
+
+            /* Build the backup payload */
+            var payload = JSON.stringify({
+                _exportedAt: new Date().toISOString(),
+                _version: 1,
+                stores: storeData,
+                localStorage: lsData,
+            }, null, 2);
+
+            /* Trigger download */
+            var blob = new Blob([payload], { type: 'application/json' });
+            var url  = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            a.href   = url;
+            a.download = 'tarteeb_backup.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('[Export] Backup saved — ' + (payload.length / 1024).toFixed(1) + ' KB');
+        } catch (err) {
+            console.error('[Export] Failed:', err);
+            alert('Export failed. See console for details.');
+        }
+    }
+
+    /**
+     * Import a previously exported backup file. Parses the JSON,
+     * overwrites IndexedDB stores and localStorage keys,
+     * then reloads the page.
+     */
+    async importLocalData(event) {
+        var file = event.target && event.target.files && event.target.files[0];
+        if (!file) return;
+
+        /* Reset the input so the same file can be re-selected */
+        event.target.value = '';
+
+        try {
+            var text = await new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onload  = function () { resolve(reader.result); };
+                reader.onerror = function () { reject(new Error('Failed to read file')); };
+                reader.readAsText(file);
+            });
+
+            var data = JSON.parse(text);
+
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid backup file: root is not an object');
+            }
+
+            /* Restore IndexedDB stores */
+            if (data.stores) {
+                var db = window.__tarteeb && window.__tarteeb.database;
+                if (db) {
+                    await db.importAll(data.stores);
+                } else {
+                    console.warn('[Import] Database not available — skipping store restore');
+                }
+            }
+
+            /* Restore localStorage keys */
+            if (data.localStorage && typeof data.localStorage === 'object') {
+                var lsKeys = Object.keys(data.localStorage);
+                for (var i = 0; i < lsKeys.length; i++) {
+                    localStorage.setItem(lsKeys[i], data.localStorage[lsKeys[i]]);
+                }
+            }
+
+            console.log('[Import] Restore complete — reloading app');
+            location.reload();
+        } catch (err) {
+            console.error('[Import] Failed:', err);
+            alert('Import failed: ' + err.message + '\n\nThe file may be corrupted or not a valid Tarteeb backup.');
+        }
     }
 
     /* ── Viewport Helpers ─────────────────────────────────── */

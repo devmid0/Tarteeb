@@ -1,19 +1,24 @@
-/**
- * Tarteeb — Cloud Sync (Premium)
- *
- * Exports syncToCloud / syncFromCloud backed by Supabase.
- * All sync operations are gated behind a premium check.
- */
-
 'use strict';
 
-const SUPABASE_URL  = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_KEY  = 'YOUR_ANON_KEY';
-const SYNC_TABLE    = 'user_data';
+const SUPABASE_URL = 'https://rhstnoegynxqaveqnbju.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_bSqzZAZgyo8iNNcH2jeggQ_luXGlgDs';
 
 let _supabase = null;
 let _database = null;
 let _eventBus = null;
+
+/* ── Store → Table mapping ─────────────────────────────────── */
+
+var TABLE_MAP = {
+    'finance-transactions': 'transactions',
+    'finance-budgets':      'budgets',
+    'tasks-items':          'tasks',
+    'tasks-projects':       'projects',
+    'habits-definitions':   'habits',
+    'habits-records':       'habit_records',
+    'goals-items':          'goals',
+    'goals-milestones':     'milestones',
+};
 
 /* ── Init ─────────────────────────────────────────────────── */
 
@@ -21,103 +26,137 @@ export function initCloudSync(database, eventBus) {
     _database = database;
     _eventBus = eventBus;
 
-    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    try {
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    } catch (err) {
+        console.error('[CloudSync] Failed to init Supabase client:', err);
     }
 }
 
-/* ── Premium Gate ─────────────────────────────────────────── */
+/* ── Push ──────────────────────────────────────────────────── */
 
-function getCurrentUser() {
-    return window.__tarteeb?.user || null;
+export async function syncToCloud(localData) {
+    try {
+        var session = await _getSession();
+        if (!session) {
+            console.log('[CloudSync] No session — skipping push');
+            return;
+        }
+
+        var userId = session.user.id;
+        var storeKeys = Object.keys(TABLE_MAP);
+
+        for (var i = 0; i < storeKeys.length; i++) {
+            var storeName = storeKeys[i];
+            var tableName = TABLE_MAP[storeName];
+            var records = localData[storeName];
+
+            if (!records || records.length === 0) continue;
+
+            var rows = records.map(function (r) {
+                var copy = Object.assign({}, r, { user_id: userId });
+                return copy;
+            });
+
+            var { error } = await _supabase
+                .from(tableName)
+                .upsert(rows, { onConflict: 'id', ignoreDuplicates: false });
+
+            if (error) {
+                console.error('[CloudSync] Push failed for ' + tableName + ':', error.message);
+            } else {
+                console.log('[CloudSync] Pushed ' + rows.length + ' rows to ' + tableName);
+            }
+        }
+
+        _eventBus?.publish('cloud:synced', { direction: 'push', timestamp: new Date().toISOString() });
+        console.log('[CloudSync] Push complete');
+    } catch (err) {
+        console.error('[CloudSync] Push error:', err);
+    }
 }
 
-function requirePremium() {
-    const user = getCurrentUser();
-    if (!user || !user.isPremium) {
-        showPaywall();
-        return false;
-    }
-    if (!_supabase) {
-        console.warn('[CloudSync] Supabase client not initialised');
-        return false;
-    }
-    return true;
-}
-
-/* ── Push to Cloud ────────────────────────────────────────── */
-
-export async function syncToCloud() {
-    if (!requirePremium()) return;
-
-    const user = getCurrentUser();
-    const payload = await _database.exportAll();
-
-    const row = {
-        user_id:  user.id,
-        data:     payload,
-        updated:  new Date().toISOString(),
-    };
-
-    const { error } = await _supabase
-        .from(SYNC_TABLE)
-        .upsert(row, { onConflict: 'user_id' });
-
-    if (error) {
-        console.error('[CloudSync] Push failed:', error);
-        throw error;
-    }
-
-    _eventBus?.publish('cloud:synced', { direction: 'push', timestamp: row.updated });
-    return row.updated;
-}
-
-/* ── Pull from Cloud ──────────────────────────────────────── */
+/* ── Pull ──────────────────────────────────────────────────── */
 
 export async function syncFromCloud() {
-    if (!requirePremium()) return;
+    try {
+        var session = await _getSession();
+        if (!session) {
+            console.log('[CloudSync] No session — skipping pull');
+            return null;
+        }
 
-    const user = getCurrentUser();
+        var userId = session.user.id;
+        var allData = {};
+        var storeKeys = Object.keys(TABLE_MAP);
 
-    const { data, error } = await _supabase
-        .from(SYNC_TABLE)
-        .select('data, updated')
-        .eq('user_id', user.id)
-        .single();
+        for (var i = 0; i < storeKeys.length; i++) {
+            var storeName = storeKeys[i];
+            var tableName = TABLE_MAP[storeName];
 
-    if (error) {
-        console.error('[CloudSync] Pull failed:', error);
-        throw error;
-    }
+            var { data, error } = await _supabase
+                .from(tableName)
+                .select('*')
+                .eq('user_id', userId);
 
-    if (!data?.data) {
-        console.warn('[CloudSync] No remote data found');
+            if (error) {
+                console.error('[CloudSync] Pull failed for ' + tableName + ':', error.message);
+                continue;
+            }
+
+            /* Strip user_id from each row before returning */
+            var cleaned = (data || []).map(function (r) {
+                var copy = Object.assign({}, r);
+                delete copy.user_id;
+                return copy;
+            });
+
+            allData[storeName] = cleaned;
+            console.log('[CloudSync] Pulled ' + cleaned.length + ' rows from ' + tableName);
+        }
+
+        _eventBus?.publish('cloud:synced', { direction: 'pull', timestamp: new Date().toISOString() });
+        console.log('[CloudSync] Pull complete');
+        return allData;
+    } catch (err) {
+        console.error('[CloudSync] Pull error:', err);
         return null;
     }
-
-    await _database.importAll(data.data);
-    _eventBus?.publish('cloud:synced', { direction: 'pull', timestamp: data.updated });
-
-    return data.updated;
 }
 
-/* ── Paywall Modal ────────────────────────────────────────── */
+/* ── Session Helper ────────────────────────────────────────── */
+
+async function _getSession() {
+    if (!_supabase) return null;
+    try {
+        var { data, error } = await _supabase.auth.getSession();
+        if (error || !data?.session) return null;
+        return data.session;
+    } catch (err) {
+        console.error('[CloudSync] Session check error:', err);
+        return null;
+    }
+}
+
+/* ── Paywall Modal (manual trigger only) ─────────────────── */
 
 export function showPaywall() {
     closePaywall();
 
-    const portal = document.getElementById('modal-portal');
+    var portal = document.getElementById('modal-portal');
     if (!portal) return;
 
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.id = 'paywall-modal';
     overlay.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
     overlay.style.pointerEvents = 'auto';
 
-    const backdrop = document.createElement('div');
+    var backdrop = document.createElement('div');
     backdrop.className = 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-entrance';
 
-    const card = document.createElement('div');
+    var card = document.createElement('div');
     card.className = [
         'relative bg-surface-raised rounded-2xl shadow-modal w-full max-w-sm',
         'border border-white/[0.06]',
@@ -126,22 +165,17 @@ export function showPaywall() {
 
     card.innerHTML =
         '<div class="p-6 text-center">' +
-
-            /* Icon */
             '<div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 ' +
                         'flex items-center justify-center shadow-[0_0_24px_rgba(251,191,36,0.25)] mb-5">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" class="w-7 h-7">' +
                     '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>' +
                 '</svg>' +
             '</div>' +
-
             '<h2 class="text-lg font-heading font-semibold text-text-primary mb-2">Premium Feature</h2>' +
             '<p class="text-[13px] text-text-secondary leading-relaxed mb-6">' +
                 'Cloud Sync keeps your data backed up and synced across devices. ' +
                 'Upgrade to Tarteeb Pro to unlock.' +
             '</p>' +
-
-            /* Actions */
             '<div class="flex flex-col gap-2">' +
                 '<button class="paywall-upgrade w-full py-2.5 rounded-xl text-[13px] font-semibold text-white ' +
                              'bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 transition-all ' +
@@ -153,7 +187,6 @@ export function showPaywall() {
                     'Maybe Later' +
                 '</button>' +
             '</div>' +
-
         '</div>';
 
     overlay.appendChild(backdrop);
@@ -161,7 +194,6 @@ export function showPaywall() {
     portal.appendChild(overlay);
     portal.style.pointerEvents = 'auto';
 
-    /* Close handlers */
     function close() { closePaywall(); }
 
     card.querySelector('.paywall-close').addEventListener('click', close);
@@ -176,9 +208,9 @@ export function showPaywall() {
 }
 
 function closePaywall() {
-    const existing = document.getElementById('paywall-modal');
+    var existing = document.getElementById('paywall-modal');
     if (existing) existing.remove();
 
-    const portal = document.getElementById('modal-portal');
+    var portal = document.getElementById('modal-portal');
     if (portal) portal.style.pointerEvents = 'none';
 }

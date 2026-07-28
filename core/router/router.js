@@ -79,10 +79,25 @@ export class Router {
     }
 
     /**
+     * Check if the hash contains Supabase auth fragments
+     * @param {string} hash
+     * @returns {boolean}
+     */
+    _isSupabaseAuthHash(hash) {
+        return hash.includes('access_token=') || hash.includes('error=') || hash.includes('type=');
+    }
+
+    /**
      * Resolve and render a route
      * @param {string} path - Route path
      */
     async resolveRoute(path) {
+        // ── Intercept Supabase auth fragments ─────────────────
+        if (this._isSupabaseAuthHash(path)) {
+            window.history.replaceState(null, null, window.location.pathname + '#/dashboard');
+            path = '/dashboard';
+        }
+
         // Parse route segments
         const segments = path.split('/').filter(Boolean);
         const pillar = segments[0] || 'dashboard';

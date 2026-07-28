@@ -240,6 +240,14 @@
             -webkit-backdrop-filter: blur(16px) saturate(1.2);
         }
 
+        /* ── Auth Blur (gated app behind auth modal) ────────── */
+        #app.auth-blur {
+            filter: blur(8px);
+            pointer-events: none;
+            user-select: none;
+            transition: filter 350ms ease;
+        }
+
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -3062,7 +3070,7 @@
 
         /* Premium Paywall Modal (single overlay replacing per-card overlays) */
         .analytics-paywall-modal {
-            position: absolute;
+            position: fixed;
             inset: 0;
             z-index: 50;
             display: flex;

@@ -17,7 +17,8 @@ import { Store } from './store/store.js';
 import { createRouter } from './router/config.js';
 import { Shell } from './shell/shell.js';
 import { Database } from '../persistence/connection/database.js';
-import { initCloudSync } from '../ui/composites/cloud-sync.js';
+import { initCloudSync } from './composites/cloud-sync.js';
+import { initAuth } from '../ui/composites/auth.js';
 
 class Application {
     constructor() {
@@ -29,6 +30,31 @@ class Application {
     }
 
     async init() {
+        /* ── Stripe payment success handler ─────────────────── */
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            localStorage.setItem('tarteeb_premium', 'true');
+            history.replaceState(null, '', window.location.pathname + window.location.hash);
+
+            var toastCtr = document.getElementById('toast-container');
+            if (toastCtr) {
+                var toast = document.createElement('div');
+                toast.className = [
+                    'px-4 py-3 rounded-xl text-[13px] font-medium shadow-elevated',
+                    'animate-enter-slide-up',
+                    'bg-surface-elevated border border-white/[0.06] text-text-primary',
+                ].filter(Boolean).join(' ');
+                toast.textContent = 'Welcome to Tarteeb Pro!';
+                toastCtr.appendChild(toast);
+                setTimeout(function () {
+                    toast.style.animation = 'exit 200ms cubic-bezier(0.55,0,1,0.45) forwards';
+                    setTimeout(function () {
+                        if (toast.parentNode) toast.parentNode.removeChild(toast);
+                    }, 200);
+                }, 3000);
+            }
+        }
+
         try {
             this.database = new Database();
             await this.database.connect();
@@ -42,10 +68,13 @@ class Application {
                 database: this.database,
                 eventBus: this.eventBus,
                 store: this.store,
-                user: { id: 'local-user', isPremium: false },
+                user: null,
             };
 
             initCloudSync(this.database, this.eventBus);
+
+            /* Gate behind authentication — shows modal + blurs app if no session */
+            await initAuth(this.eventBus);
 
             this.shell = new Shell(this.store, this.eventBus);
             this.shell.mount();
