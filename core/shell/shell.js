@@ -358,6 +358,13 @@ export class Shell {
         var self = this;
         if (btn.classList.contains('syncing')) return;
 
+        if (localStorage.getItem('tarteeb_premium') !== 'true') {
+            import('../composites/cloud-sync.js').then(function (mod) {
+                mod.showPaywall();
+            });
+            return;
+        }
+
         import('../composites/cloud-sync.js').then(async function (mod) {
             btn.classList.add('syncing');
             btn.disabled = true;

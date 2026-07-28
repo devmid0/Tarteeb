@@ -208,6 +208,13 @@ export class TaskStore {
             return null;
         }
 
+        var { canCreateEntity, showPaywall } = await import('../../core/freemium.js');
+        if (!canCreateEntity('projects', this.projects.length)) {
+            showPaywall();
+            this.eventBus.publish('tasks:freemium-blocked', { entityType: 'projects', limit: 3 });
+            return null;
+        }
+
         try {
             var saved = await this.gateway.createProject(data);
             this.projects = this.projects.concat([saved]);

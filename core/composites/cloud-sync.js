@@ -21,7 +21,7 @@
  * Replace the URL with your live Stripe link in production.
  */
 export function handleUpgradeClick() {
-    window.location.href = 'https://buy.stripe.com/test_placeholder';
+    window.location.href = 'https://buy.stripe.com/test_6oU7sMgzUd8o5Wl9Hs6wE00';
 }
 
 /* ── Sync Placeholders ────────────────────────────────────── */
@@ -118,6 +118,7 @@ export function showPaywall() {
 
     function close() { closePaywall(); }
 
+    card.querySelector('.paywall-upgrade').addEventListener('click', handleUpgradeClick);
     card.querySelector('.paywall-close').addEventListener('click', close);
     backdrop.addEventListener('click', close);
 
