@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f0f11">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./assets/icons/icon-192.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
     <title>Tarteeb</title>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -324,6 +329,19 @@
             animation: none;
         }
 
+        /* ── Sync Button States ─────────────────────────────── */
+        #sync-btn.syncing {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .sync-spin {
+            animation: sync-spin 900ms linear infinite;
+        }
+        @keyframes sync-spin {
+            0%   { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* ── Note Canvas Editor (Notion-style) ────────────────── */
         .canvas-editor {
             display: flex;
@@ -610,14 +628,6 @@
             .canvas-footer {
                 padding: 10px 20px;
             }
-        }
-
-        /* ── Grid ↔ Canvas Transition ───────────────────────── */
-        #pkm-masonry-slot {
-            transition: opacity 200ms ease, transform 200ms ease;
-        }
-        #pkm-masonry-slot.is-hidden {
-            display: none;
         }
 
         /* ── Knowledge Masonry Grid ───────────────────────────── */
@@ -1418,16 +1428,6 @@
         .habit-cell--missed {
             background: rgba(255,255,255,0.04);
             border: 1px solid transparent;
-        }
-
-        /* Activation animation */
-        .habit-cell--activating {
-            animation: cell-activate 400ms cubic-bezier(0.34,1.56,0.64,1) forwards;
-        }
-        @keyframes cell-activate {
-            0% { transform: scale(1); box-shadow: 0 0 0 rgba(251,146,60,0); }
-            50% { transform: scale(1.3); box-shadow: 0 0 20px rgba(251,146,60,0.6); }
-            100% { transform: scale(1); box-shadow: 0 0 8px rgba(251,146,60,0.3); }
         }
 
         /* Card Footer */
@@ -2892,6 +2892,220 @@
             .vision-card-pill-label {
                 font-size: 11px;
                 max-width: 120px;
+            }
+        }
+
+        /* ── Advanced Analytics Dashboard ─────────────────── */
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .analytics-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .analytics-chart-card {
+            position: relative;
+            background: rgba(22, 22, 25, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 18px;
+            padding: 20px;
+            overflow: hidden;
+            transition: transform 220ms cubic-bezier(0.45,0,0.55,1),
+                        box-shadow 220ms cubic-bezier(0.45,0,0.55,1),
+                        border-color 220ms ease;
+        }
+        .analytics-chart-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3),
+                        0 0 0 1px rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.07);
+        }
+
+        .analytics-chart-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .analytics-chart-card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .analytics-chart-card-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .analytics-chart-card-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f4f4f5;
+            letter-spacing: -0.01em;
+        }
+
+        .analytics-chart-card-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .analytics-chart-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+        }
+
+        .analytics-chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Premium Paywall Overlay */
+        .analytics-paywall-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: inherit;
+            backdrop-filter: blur(8px) saturate(1.2);
+            -webkit-backdrop-filter: blur(8px) saturate(1.2);
+            background: rgba(15, 15, 17, 0.45);
+        }
+
+        .analytics-paywall-cta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .analytics-paywall-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(251,146,60,0.12) 0%, rgba(244,114,182,0.12) 100%);
+            border: 1px solid rgba(251,146,60,0.15);
+            color: #fb923c;
+            font-size: 22px;
+            animation: analytics-paywall-glow 3s ease-in-out infinite;
+        }
+        @keyframes analytics-paywall-glow {
+            0%, 100% { box-shadow: 0 0 16px rgba(251,146,60,0.1); }
+            50%      { box-shadow: 0 0 28px rgba(251,146,60,0.25); }
+        }
+
+        .analytics-paywall-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #f4f4f5;
+            letter-spacing: -0.01em;
+        }
+
+        .analytics-paywall-desc {
+            font-size: 12px;
+            color: #71717a;
+            line-height: 1.5;
+            max-width: 220px;
+        }
+
+        .analytics-paywall-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 22px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, #fb923c 0%, #f472b6 100%);
+            border: none;
+            cursor: pointer;
+            transition: all 200ms cubic-bezier(0.45,0,0.55,1);
+            box-shadow: 0 4px 20px rgba(251,146,60,0.25),
+                        0 0 0 1px rgba(251,146,60,0.1);
+        }
+        .analytics-paywall-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(251,146,60,0.35),
+                        0 0 0 1px rgba(251,146,60,0.15);
+        }
+        .analytics-paywall-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* Premium Paywall Modal (single overlay replacing per-card overlays) */
+        .analytics-paywall-modal {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 15, 17, 0.6);
+        }
+
+        .analytics-paywall-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+            padding: 32px 28px;
+            background: #1c1c20;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5),
+                        0 0 0 1px rgba(255,255,255,0.03);
+            max-width: 320px;
+            width: 90%;
+        }
+
+        .analytics-paywall-later {
+            font-size: 12px;
+            color: #52525b;
+            cursor: pointer;
+            transition: color 200ms ease;
+            user-select: none;
+        }
+        .analytics-paywall-later:hover {
+            color: #a1a1aa;
+        }
+
+        /* Mobile: single column for analytics grid */
+        @media (max-width: 767px) {
+            .analytics-chart-card {
+                padding: 16px;
+                border-radius: 14px;
+            }
+            .analytics-chart-wrap {
+                aspect-ratio: 4 / 3;
             }
         }
 

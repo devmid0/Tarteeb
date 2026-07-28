@@ -8,7 +8,7 @@
  *   - Right: Amount with color coding (red=expense, green=income)
  */
 
-import { TX_TYPE, CATEGORY_META, formatCurrency } from '../domain/finance-rules.js';
+import { TX_TYPE, CATEGORY_META } from '../domain/finance-rules.js';
 
 export function createTransactionFeed(transactions, opts) {
     var callbacks = opts || {};

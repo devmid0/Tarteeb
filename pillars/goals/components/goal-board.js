@@ -37,12 +37,10 @@
 
 import {
     daysRemaining, formatDeadline, isOverdue,
-    PRIORITY_LABELS, PRIORITY_COLORS,
+    PRIORITY_LABELS,
 } from '../domain/goal-rules.js';
 
 /* ── SVG Icons ───────────────────────────────────────────── */
-
-var SVG_CHECK = '<svg viewBox="0 0 14 14" fill="none" class="w-3 h-3"><path d="M3 7.5l3 3 5.5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 var SVG_DELETE = '<svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3"><path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 010-2h3a1 1 0 011-1h2a1 1 0 011 1h3a1 1 0 011 1zM4.118 4L4 4.059V13a1 1 0 001 1h6a1 1 0 001-1V4.059L11.882 4H4.118z" clip-rule="evenodd"/></svg>';
 
@@ -181,7 +179,6 @@ function _renderVisionCard(goal, allMilestones, progressMap, o) {
     titleWrap.appendChild(title);
 
     /* Priority badge */
-    var prioColor = PRIORITY_COLORS[goal.priority] || PRIORITY_COLORS.medium;
     var prioBadge = document.createElement('span');
     prioBadge.className = 'vision-card-prio';
     prioBadge.style.color = 'var(--goals-prio-' + (goal.priority || 'medium') + ')';

@@ -785,26 +785,7 @@ export class HabitStore {
         return _sortByCreated(archived);
     }
 
-    /**
-     * Habits filtered by frequency type.
-     * @param {string} frequency — "daily" | "weekly" | "monthly"
-     */
-    getHabitsByFrequency(frequency) {
-        return this.getActiveHabits().filter(function (h) {
-            return h.frequency === frequency;
-        });
-    }
-
-    /**
-     * Habits filtered by category.
-     * @param {string} category
-     */
-    getHabitsByCategory(category) {
-        return this.getActiveHabits().filter(function (h) {
-            return h.category === category;
-        });
-    }
-
+    // YAGNI: Removed getHabitsByFrequency, getHabitsByCategory (never called)
     /**
      * Habits that are due on a specific date.
      * @param {string} dateStr — "YYYY-MM-DD" (defaults to today)
@@ -1023,29 +1004,6 @@ export class HabitStore {
                 streak:          this.getStreak(active[i].id),
                 bestStreak:      this.getBestStreak(active[i].id),
                 completionRate:  this.getCompletionRate(active[i].id),
-            });
-        }
-        return result;
-    }
-
-    /**
-     * Weekly completion heatmap data for a specific habit.
-     * Returns array of 7 objects: { date, dayLabel, completed, due }.
-     * @param {number} habitId
-     */
-    getWeekHeatmap(habitId) {
-        var habit = this.getHabitById(habitId);
-        if (!habit) return [];
-
-        var today = _today();
-        var result = [];
-        for (var i = 6; i >= 0; i--) {
-            var d = _subDays(today, i);
-            result.push({
-                date:      d,
-                dayLabel:  DAY_NAMES[_dayOfWeek(d)],
-                completed: this.isHabitCompletedOnDate(habitId, d),
-                due:       _isHabitDueOnDay(habit, d),
             });
         }
         return result;

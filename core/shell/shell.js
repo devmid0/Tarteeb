@@ -185,9 +185,25 @@ export class Shell {
 
         html += '</nav>';
 
-        /* ── Footer Toggle ── */
+        /* ── Footer ── */
         html +=
-            '<div class="px-2 pb-3 flex-shrink-0">' +
+            '<div class="px-2 pb-3 flex-shrink-0 space-y-1">';
+
+        /* Sync button */
+        html +=
+                '<button id="sync-btn"' +
+                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                               'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200">' +
+                    '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
+                        '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
+                    '</svg>' +
+                    (showLabel
+                        ? '<span class="text-[13px] font-medium whitespace-nowrap">Sync Now</span>'
+                        : '') +
+                '</button>';
+
+        /* Collapse toggle */
+        html +=
                 '<button id="sidebar-toggle"' +
                         ' class="w-full flex items-center justify-center gap-2 rounded-lg px-2 py-2 ' +
                                'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200"' +
@@ -254,6 +270,13 @@ export class Shell {
             });
         }
 
+        var syncBtn = document.getElementById('sync-btn');
+        if (syncBtn) {
+            syncBtn.addEventListener('click', function () {
+                self._handleSync(syncBtn);
+            });
+        }
+
         if (!this._isMobile()) {
             this.sidebarEl.addEventListener('mouseenter', function () {
                 clearTimeout(self._hoverTimer);
@@ -278,6 +301,40 @@ export class Shell {
 
     _syncActive() {
         this._renderSidebar();
+    }
+
+    /* ── Cloud Sync ──────────────────────────────────────── */
+
+    _handleSync(btn) {
+        var self = this;
+        if (btn.classList.contains('syncing')) return;
+
+        import('../../ui/composites/cloud-sync.js').then(function (mod) {
+            var wasSyncing = false;
+            btn.classList.add('syncing');
+            btn.disabled = true;
+            btn.innerHTML =
+                '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0 sync-spin">' +
+                    '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
+                '</svg>' +
+                '<span class="text-[13px] font-medium whitespace-nowrap">Syncing…</span>';
+
+            mod.syncToCloud()
+                .then(function () { return mod.syncFromCloud(); })
+                .catch(function () {})
+                .finally(function () {
+                    btn.classList.remove('syncing');
+                    btn.disabled = false;
+                    var showLabel = !self.store.get('sidebar.collapsed') && !self._isMobile();
+                    btn.innerHTML =
+                        '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
+                            '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
+                        '</svg>' +
+                        (showLabel
+                            ? '<span class="text-[13px] font-medium whitespace-nowrap">Sync Now</span>'
+                            : '');
+                });
+        });
     }
 
     /* ── Viewport Helpers ─────────────────────────────────── */

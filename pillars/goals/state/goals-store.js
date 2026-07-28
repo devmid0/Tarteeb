@@ -599,21 +599,7 @@ export class GoalsStore {
         return this.goals.filter(function (g) { return g.priority === priority; });
     }
 
-    /**
-     * Goals that are overdue (active with a past deadline).
-     * @returns {Object[]}
-     */
-    getOverdueGoals() {
-        var now = new Date();
-        now.setHours(0, 0, 0, 0);
-        return this.goals.filter(function (g) {
-            if (g.status !== 'active' || !g.deadline) return false;
-            var parts = g.deadline.split('-');
-            var target = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            return target < now;
-        });
-    }
-
+    // YAGNI: Removed getOverdueGoals (stats section computes this inline)
     /**
      * Goals with no milestones attached.
      * @returns {Object[]}
@@ -640,40 +626,8 @@ export class GoalsStore {
         return sortMilestones(filtered);
     }
 
-    /**
-     * Single milestone by id.
-     * @param {number} id
-     * @returns {Object|null}
-     */
-    getMilestoneById(id) {
-        for (var i = 0; i < this.milestones.length; i++) {
-            if (this.milestones[i].id === id) return this.milestones[i];
-        }
-        return null;
-    }
-
-    /**
-     * All completed milestones for a goal.
-     * @param {number} goalId
-     * @returns {Object[]}
-     */
-    getCompletedMilestonesByGoalId(goalId) {
-        return this.milestones.filter(function (m) {
-            return m.goalId === goalId && m.isCompleted;
-        });
-    }
-
-    /**
-     * All incomplete milestones for a goal.
-     * @param {number} goalId
-     * @returns {Object[]}
-     */
-    getIncompleteMilestonesByGoalId(goalId) {
-        return this.milestones.filter(function (m) {
-            return m.goalId === goalId && !m.isCompleted;
-        });
-    }
-
+    // YAGNI: Removed getMilestoneById, getCompletedMilestonesByGoalId,
+    // getIncompleteMilestonesByGoalId (never called from any view)
     /**
      * Compute progress for a goal from its in-memory milestones.
      * @param {number} goalId
@@ -729,33 +683,7 @@ export class GoalsStore {
         return result.sort();
     }
 
-    /**
-     * Get goals grouped by category.
-     * @returns {Object} { category: [goal, ...] }
-     */
-    getGoalsByCategoryGrouped() {
-        var groups = {};
-        for (var i = 0; i < this.goals.length; i++) {
-            var cat = this.goals[i].category || 'general';
-            if (!groups[cat]) groups[cat] = [];
-            groups[cat].push(this.goals[i]);
-        }
-        return groups;
-    }
-
-    /**
-     * Get goals grouped by priority.
-     * @returns {Object} { priority: [goal, ...] }
-     */
-    getGoalsByPriorityGrouped() {
-        var groups = {};
-        for (var i = 0; i < this.goals.length; i++) {
-            var pri = this.goals[i].priority || 'medium';
-            if (!groups[pri]) groups[pri] = [];
-            groups[pri].push(this.goals[i]);
-        }
-        return groups;
-    }
+    // YAGNI: Removed getGoalsByCategoryGrouped, getGoalsByPriorityGrouped (never called)
 
     /**
      * Next N upcoming deadlines from active goals.

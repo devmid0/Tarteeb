@@ -17,6 +17,7 @@ import { Store } from './store/store.js';
 import { createRouter } from './router/config.js';
 import { Shell } from './shell/shell.js';
 import { Database } from '../persistence/connection/database.js';
+import { initCloudSync } from '../ui/composites/cloud-sync.js';
 
 class Application {
     constructor() {
@@ -41,7 +42,10 @@ class Application {
                 database: this.database,
                 eventBus: this.eventBus,
                 store: this.store,
+                user: { id: 'local-user', isPremium: false },
             };
+
+            initCloudSync(this.database, this.eventBus);
 
             this.shell = new Shell(this.store, this.eventBus);
             this.shell.mount();
@@ -90,7 +94,12 @@ class Application {
 }
 
 const app = new Application();
-document.addEventListener('DOMContentLoaded', () => app.init());
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+    }
+});
 window.addEventListener('beforeunload', () => app.destroy());
 
 export default app;

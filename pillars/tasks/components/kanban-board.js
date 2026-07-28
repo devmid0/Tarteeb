@@ -14,7 +14,7 @@
 
 'use strict';
 
-import { PRIORITY, PRIORITY_ORDER, formatMinutes } from '../domain/task-rules.js';
+import { PRIORITY_ORDER, formatMinutes } from '../domain/task-rules.js';
 
 var COLUMNS = [
     { id: 'pending',     label: 'To Do',        icon: '📋', color: '#71717a' },

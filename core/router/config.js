@@ -13,6 +13,7 @@
  * - /knowledge - Knowledge management (notes, links)
  * - /habits - Habit tracking (today, habits, stats)
  * - /goals - Goal setting (active, completed, new)
+ * - /analytics - Advanced analytics (premium, charts)
  */
 
 import { Router } from './router.js';
@@ -56,6 +57,11 @@ export function createRouter(store, eventBus) {
     // Goals pillar
     router.register('/goals', () => 
         import('../../pillars/goals/views/goals-view.js')
+    );
+
+    // Analytics (premium)
+    router.register('/analytics', () =>
+        import('../../pillars/analytics/views/analytics-view.js')
     );
     
     return router;

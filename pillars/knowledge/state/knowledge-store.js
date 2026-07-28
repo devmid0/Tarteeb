@@ -37,18 +37,11 @@
 import {
     createNoteData,
     createLinkData,
-    validateNote,
     validateLink,
     normalizeTags,
     sortByCreated,
     sortByPinnedThenCreated,
-    sortByTitle,
     sortByUpdated,
-    selectByCategory,
-    selectByTag,
-    selectByAnyTag,
-    selectBySearch,
-    selectRecent,
     summarizeByCategory,
     summarizeTags,
 } from '../domain/knowledge-rules.js';
@@ -521,22 +514,6 @@ export class KnowledgeStore {
     }
 
     /**
-     * Only favorited notes, pinned first.
-     */
-    getFavoritedNotes() {
-        var favs = this.notes.filter(function (n) { return !!n.isFavorited && !n.isArchived; });
-        return sortByPinnedThenCreated(favs);
-    }
-
-    /**
-     * Only pinned notes (active only).
-     */
-    getPinnedNotes() {
-        var pinned = this.notes.filter(function (n) { return !!n.isPinned && !n.isArchived; });
-        return sortByCreated(pinned);
-    }
-
-    /**
      * Notes filtered by exact category path.
      */
     getNotesByCategory(category) {
@@ -565,33 +542,6 @@ export class KnowledgeStore {
     }
 
     /**
-     * Notes matching a specific tag.
-     */
-    getNotesByTag(tag) {
-        var filtered = this.notes.filter(function (n) {
-            return !n.isArchived && Array.isArray(n.tags) && n.tags.indexOf(tag.toLowerCase().trim()) !== -1;
-        });
-        return sortByPinnedThenCreated(filtered);
-    }
-
-    /**
-     * Notes matching ANY of the given tags.
-     */
-    getNotesByAnyTag(tags) {
-        if (!tags || tags.length === 0) return this.getActiveNotes();
-        var lowerTags = tags.map(function (t) { return t.toLowerCase().trim(); });
-        var filtered = this.notes.filter(function (n) {
-            if (n.isArchived) return false;
-            if (!Array.isArray(n.tags)) return false;
-            for (var i = 0; i < lowerTags.length; i++) {
-                if (n.tags.indexOf(lowerTags[i]) !== -1) return true;
-            }
-            return false;
-        });
-        return sortByPinnedThenCreated(filtered);
-    }
-
-    /**
      * Full-text search across title, content, category, and tags.
      * Case-insensitive substring match.
      */
@@ -611,22 +561,6 @@ export class KnowledgeStore {
             return false;
         });
         return sortByPinnedThenCreated(filtered);
-    }
-
-    /**
-     * Most recently updated N notes (active only).
-     */
-    getRecentlyUpdated(count) {
-        count = count || 5;
-        return sortByUpdated(this.getActiveNotes()).slice(0, count);
-    }
-
-    /**
-     * Most recently created N notes (active only).
-     */
-    getRecentNotes(count) {
-        count = count || 5;
-        return sortByCreated(this.getActiveNotes()).slice(0, count);
     }
 
     /**
@@ -669,17 +603,6 @@ export class KnowledgeStore {
     }
 
     /**
-     * Links matching a specific tag.
-     */
-    getLinksByTag(tag) {
-        var lower = tag.toLowerCase().trim();
-        var filtered = this.links.filter(function (l) {
-            return Array.isArray(l.tags) && l.tags.indexOf(lower) !== -1;
-        });
-        return sortByCreated(filtered);
-    }
-
-    /**
      * Single link by id.
      */
     getLinkById(id) {
@@ -687,14 +610,6 @@ export class KnowledgeStore {
             if (this.links[i].id === id) return this.links[i];
         }
         return null;
-    }
-
-    /**
-     * Most recent N links.
-     */
-    getRecentLinks(count) {
-        count = count || 5;
-        return sortByCreated(this.links).slice(0, count);
     }
 
     /* ================================================================

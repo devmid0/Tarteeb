@@ -21,7 +21,7 @@
 
 'use strict';
 
-import { FREQUENCY, FREQUENCY_LABELS, DAY_LABELS } from '../state/habit-store.js';
+import { FREQUENCY_LABELS, DAY_LABELS } from '../state/habit-store.js';
 
 /* ── SVG Icons ───────────────────────────────────────────── */
 

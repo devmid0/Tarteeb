@@ -1,15 +1,5 @@
-/**
- * Tarteeb — Finance Gateway
- *
- * The ONLY code path that touches the finance-transactions and
- * finance-budgets IndexedDB object stores. All other modules
- * call through this gateway.
- *
- * Responsibilities:
- *   - CRUD for transactions and budgets
- *   - Query by index (date, category, type)
- *   - Aggregate queries for summaries
- */
+// YAGNI: Removed getTransactionsByType, getTransactionsByCategory, getTransactionsByDate, getBudgetsByCategory
+// (store does in-memory filtering; none called from gateway)
 
 const TX_STORE = 'finance-transactions';
 const BUDGET_STORE = 'finance-budgets';
@@ -18,8 +8,6 @@ export class FinanceGateway {
     constructor(database) {
         this.db = database;
     }
-
-    /* ── Transactions ────────────────────────────────────── */
 
     async createTransaction(data) {
         var id = await this.db.save(TX_STORE, data);
@@ -44,20 +32,6 @@ export class FinanceGateway {
         return this.db.delete(TX_STORE, id);
     }
 
-    async getTransactionsByType(type) {
-        return this.db.getByIndex(TX_STORE, 'by-type', type);
-    }
-
-    async getTransactionsByCategory(category) {
-        return this.db.getByIndex(TX_STORE, 'by-category', category);
-    }
-
-    async getTransactionsByDate(date) {
-        return this.db.getByIndex(TX_STORE, 'by-date', date);
-    }
-
-    /* ── Budgets ─────────────────────────────────────────── */
-
     async createBudget(data) {
         var id = await this.db.save(BUDGET_STORE, data);
         return Object.assign({}, data, { id: id });
@@ -79,9 +53,5 @@ export class FinanceGateway {
 
     async deleteBudget(id) {
         return this.db.delete(BUDGET_STORE, id);
-    }
-
-    async getBudgetsByCategory(category) {
-        return this.db.getByIndex(BUDGET_STORE, 'by-category', category);
     }
 }

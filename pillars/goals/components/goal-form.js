@@ -36,17 +36,7 @@ var SVG_PLUS_SM = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" st
 
 var SVG_CHEVRON = '<svg viewBox="0 0 12 12" fill="currentColor" class="w-2.5 h-2.5"><path d="M3 5l3 3 3-3"/></svg>';
 
-var SVG_CHECK = '<svg viewBox="0 0 14 14" fill="none" class="w-3 h-3"><path d="M3 7.5l3 3 5.5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
 var SVG_CLOSE = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-3 h-3"><path d="M3 3l6 6M9 3l-6 6"/></svg>';
-
-/* ── Priority color map (Tailwind classes) ──────────────── */
-
-var PRIORITY_BTN_COLORS = {
-    high:   'bg-status-error/15 text-status-error border-status-error/20',
-    medium: 'bg-status-warning/15 text-status-warning border-status-warning/20',
-    low:    'bg-status-success/15 text-status-success border-status-success/20',
-};
 
 /* ================================================================
    GOAL FORM — Factory
@@ -61,7 +51,6 @@ var PRIORITY_BTN_COLORS = {
  */
 export function createGoalForm(opts) {
     var o = opts || {};
-    var existingCategories = o.categories || [];
 
     var wrapper = document.createElement('div');
     wrapper.className = 'mb-4';
@@ -490,61 +479,4 @@ export function createGoalForm(opts) {
     wrapper.appendChild(expandedForm);
 
     return wrapper;
-}
-
-/* ================================================================
-   MILESTONE FORM — Factory (inline addition to existing goal)
-   ================================================================ */
-
-/**
- * Create an inline milestone addition form.
- * @param {Object} opts
- * @param {number} opts.goalId — target goal
- * @param {Function} opts.onSubmit — called with (goalId, title)
- * @returns {HTMLElement}
- */
-export function createMilestoneForm(opts) {
-    var o = opts || {};
-
-    var row = document.createElement('div');
-    row.className = 'flex items-center gap-2';
-
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.className = [
-        'flex-1 bg-transparent text-[12px] text-text-secondary',
-        'px-2.5 py-1.5 rounded-lg',
-        'border border-dashed border-white/[0.06]',
-        'hover:border-white/[0.1] focus:border-accent-goals/30',
-        'focus:outline-none transition-colors duration-150',
-        'placeholder:text-text-disabled/40',
-    ].join(' ');
-    input.placeholder = 'Add a sub-project\u2026';
-
-    var addBtn = document.createElement('button');
-    addBtn.type = 'button';
-    addBtn.className = [
-        'p-1.5 rounded-lg text-accent-goals/60 hover:text-accent-goals',
-        'hover:bg-white/[0.04] transition-colors duration-150',
-    ].join(' ');
-    addBtn.innerHTML = SVG_PLUS_SM;
-    addBtn.title = 'Add sub-project';
-
-    function _submit() {
-        var val = input.value.trim();
-        if (val && o.onSubmit) {
-            o.onSubmit(o.goalId, val);
-            input.value = '';
-        }
-    }
-
-    input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); _submit(); }
-    });
-    addBtn.addEventListener('click', _submit);
-
-    row.appendChild(input);
-    row.appendChild(addBtn);
-
-    return row;
 }
