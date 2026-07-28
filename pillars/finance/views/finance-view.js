@@ -24,9 +24,8 @@
 import { FinanceStore } from '../state/finance-store.js';
 import { FinanceGateway } from '../../../persistence/gateways/finance-gateway.js';
 import { createFinanceSummary } from '../components/finance-summary.js';
-import { createTransactionForm } from '../components/transaction-form.js';
-import { createTransactionCard } from '../components/transaction-card.js';
-import { openTransactionEditModal } from '../components/transaction-edit-modal.js';
+import { createQuickCaptureInput } from '../components/quick-capture-input.js';
+import { createTransactionFeed } from '../components/transaction-feed.js';
 import { createFinanceFilterBar } from '../components/finance-filters.js';
 import { createBudgetCard } from '../components/budget-card.js';
 import { formatCurrency, TX_TYPE, EXPENSE_CATEGORIES, INCOME_CATEGORIES, CATEGORY_META, BUDGET_PERIOD, BUDGET_PERIOD_LABELS } from '../domain/finance-rules.js';
@@ -200,26 +199,63 @@ export class FinanceView {
         }
 
         var self = this;
-        var cbs = this._cardCallbacks();
 
-        /* Summary stats */
-        slot.appendChild(createFinanceSummary({
-            totals:      store.getTotals(),
-            weekTotals:  store.getWeekTotals(),
-            monthTotals: store.getMonthTotals(),
-            transactions: store.transactions,
-        }));
+        /* ── Hero Balance Card (streamlined) ── */
+        var totals = store.getTotals();
+        var heroCard = document.createElement('div');
+        heroCard.className = 'tx-hero-card';
+        heroCard.innerHTML =
+            '<div class="tx-hero-glow"></div>' +
+            '<div class="tx-hero-content">' +
+                '<div class="tx-hero-label">Total Balance</div>' +
+                '<div class="tx-hero-amount">' + formatCurrency(totals.net) + '</div>' +
+                '<div class="tx-hero-stats">' +
+                    '<div class="tx-hero-stat">' +
+                        '<div class="tx-hero-stat-dot tx-hero-stat-dot--income"></div>' +
+                        '<span class="tx-hero-stat-label">Income</span>' +
+                        '<span class="tx-hero-stat-value tx-hero-stat-value--income">' + formatCurrency(totals.income) + '</span>' +
+                    '</div>' +
+                    '<div class="tx-hero-stat">' +
+                        '<div class="tx-hero-stat-dot tx-hero-stat-dot--expense"></div>' +
+                        '<span class="tx-hero-stat-label">Expenses</span>' +
+                        '<span class="tx-hero-stat-value tx-hero-stat-value--expense">' + formatCurrency(totals.expenses) + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        slot.appendChild(heroCard);
 
-        /* Inline form */
-        slot.appendChild(createTransactionForm({
+        /* ── Quick Capture Input (massive number + category pills) ── */
+        var quickCapture = createQuickCaptureInput({
             onSubmit: function (data) {
                 store.dispatch({ type: 'ADD_TRANSACTION', payload: data });
             },
-        }));
+        });
+        slot.appendChild(quickCapture);
 
-        /* Filter/sort state — uses class-level fields (stable across re-renders) */
-        var renderList = function () {
-            var existing = slot.querySelector('.tx-list-container');
+        /* ── Filter bar ── */
+        var renderFilterBar = function () {
+            var old = slot.querySelector('.tx-filter-bar');
+            if (old) old.remove();
+
+            var bar = createFinanceFilterBar({
+                activeFilter: self._txFilter,
+                activeSort:   self._txSort,
+                onFilterChange: function (f) {
+                    self._txFilter = f;
+                    renderFeed();
+                },
+                onSortChange: function (s) {
+                    self._txSort = s;
+                    renderFeed();
+                },
+            });
+            bar.classList.add('tx-filter-bar');
+            slot.appendChild(bar);
+        };
+
+        /* ── Transaction Feed ── */
+        var renderFeed = function () {
+            var existing = slot.querySelector('.tx-feed');
             if (existing) existing.remove();
 
             var transactions = store.getAllTransactions();
@@ -237,56 +273,20 @@ export class FinanceView {
             if (sort === 'amount') {
                 transactions = transactions.slice().sort(function (a, b) { return b.amount - a.amount; });
             }
-            /* 'date' is default sort from store.getAllTransactions() */
 
-            var container = document.createElement('div');
-            container.className = 'tx-list-container';
-
-            if (transactions.length === 0) {
-                container.innerHTML =
-                    '<div class="text-center py-16">' +
-                        '<div class="text-4xl mb-3 opacity-20">\uD83D\uDCB0</div>' +
-                        '<p class="text-[14px] text-text-secondary font-medium">No transactions yet</p>' +
-                        '<p class="text-[12px] text-text-tertiary mt-1">Add your first transaction above to get started.</p>' +
-                    '</div>';
-            } else {
-                var list = document.createElement('div');
-                list.className = 'space-y-1';
-
-                for (var i = 0; i < transactions.length; i++) {
-                    list.appendChild(createTransactionCard(transactions[i], cbs));
-                }
-                container.appendChild(list);
-            }
-
-            slot.appendChild(container);
-        };
-
-        /* Filter bar — recreated on each renderList() with current state */
-        var renderFilterBar = function () {
-            var old = slot.querySelector('.tx-filter-bar');
-            if (old) old.remove();
-
-            var bar = createFinanceFilterBar({
-                activeFilter: self._txFilter,
-                activeSort:   self._txSort,
-                onFilterChange: function (f) {
-                    self._txFilter = f;
-                    renderList();
-                    renderFilterBar();
-                },
-                onSortChange: function (s) {
-                    self._txSort = s;
-                    renderList();
-                    renderFilterBar();
+            var feed = createTransactionFeed(transactions, {
+                onDelete: function (id) {
+                    if (confirm('Delete this transaction?')) {
+                        store.dispatch({ type: 'DELETE_TRANSACTION', payload: id });
+                    }
                 },
             });
-            bar.classList.add('tx-filter-bar');
-            slot.insertBefore(bar, slot.querySelector('.tx-list-container'));
+
+            slot.appendChild(feed);
         };
 
         renderFilterBar();
-        renderList();
+        renderFeed();
     }
 
     /* ── Budgets Section ─────────────────────────────────── */

@@ -55,6 +55,7 @@ const HOVER_REVERT_MS = 350;
 const MOBILE_BP = 768;
 
 import { QuickCapture } from '../../ui/composites/quick-capture.js';
+import { CommandPalette } from '../../ui/composites/command-palette.js';
 
 export class Shell {
     constructor(store, eventBus) {
@@ -69,6 +70,7 @@ export class Shell {
         this._hoverTimer      = null;
         this._expandedByHover = false;
         this._quickCapture    = null;
+        this._commandPalette  = null;
 
         this._onResize = this._onResize.bind(this);
         this._onHash   = this._onHash.bind(this);
@@ -88,10 +90,22 @@ export class Shell {
             this._quickCapture = new QuickCapture();
             this._quickCapture.init(db, this.eventBus);
             window.__tarteeb.quickCapture = this._quickCapture;
+
+            /* Command Palette — Ctrl+K global omni-search */
+            this._commandPalette = new CommandPalette();
+            this._commandPalette.init(db, this.eventBus);
+            window.__tarteeb.commandPalette = this._commandPalette;
         }
+
+        /* Expose shell ref for sidebar toggle from command palette */
+        window.__tarteeb.shell = this;
     }
 
     destroy() {
+        if (this._commandPalette) {
+            this._commandPalette.destroy();
+            this._commandPalette = null;
+        }
         if (this._quickCapture) {
             this._quickCapture.destroy();
             this._quickCapture = null;

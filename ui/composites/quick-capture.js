@@ -4,13 +4,13 @@
  * Standalone module providing instant task / note / expense
  * logging from ANY view. Triggered by:
  *   - Floating Action Button (persistent, always visible)
- *   - Ctrl+K keyboard shortcut
+ *   - Command Palette (Ctrl+K → "Quick Capture" action)
  *
  * Lifecycle:
- *   init(db, bus) → binds global shortcut, creates persistent FAB
+ *   init(db, bus) → creates persistent FAB
  *   open()        → builds overlay, animates in
  *   close()       → animates out, removes overlay
- *   destroy()     → removes FAB, unbinds all listeners
+ *   destroy()     → removes FAB
  *
  * Design constraints:
  *   - Zero dependency on any pillar view
@@ -23,9 +23,10 @@
 
 /* ── Imports ──────────────────────────────────────────────── */
 
-import { TaskGateway }      from '../../persistence/gateways/task-gateway.js';
-import { KnowledgeGateway }  from '../../persistence/gateways/knowledge-gateway.js';
-import { FinanceGateway }    from '../../persistence/gateways/finance-gateway.js';
+import { TaskGateway }          from '../../persistence/gateways/task-gateway.js';
+import { KnowledgeGateway }      from '../../persistence/gateways/knowledge-gateway.js';
+import { FinanceGateway }        from '../../persistence/gateways/finance-gateway.js';
+import { OptimisticDispatcher }  from '../../core/events/optimistic-dispatcher.js';
 
 /* ── Constants ───────────────────────────────────────────── */
 
@@ -45,12 +46,12 @@ var FAB_TRIGGER  = 'qc-global-trigger';
 
 export class QuickCapture {
     constructor() {
-        this._db       = null;
-        this._bus      = null;
-        this._open     = false;
-        this._fabEl    = null;
-        this._esc      = null;
-        this._boundKey = this._onKeydown.bind(this);
+        this._db         = null;
+        this._bus        = null;
+        this._dispatcher = null;
+        this._open       = false;
+        this._fabEl      = null;
+        this._esc        = null;
     }
 
     /* ── Lifecycle ────────────────────────────────────────── */
@@ -64,17 +65,17 @@ export class QuickCapture {
         if (!database || !eventBus) return;
         this._db  = database;
         this._bus = eventBus;
+        this._dispatcher = new OptimisticDispatcher(eventBus);
 
         this._createFAB();
-        window.addEventListener('keydown', this._boundKey);
     }
 
     destroy() {
         this.close();
-        window.removeEventListener('keydown', this._boundKey);
         this._removeFAB();
-        this._db  = null;
-        this._bus = null;
+        this._db         = null;
+        this._bus        = null;
+        this._dispatcher = null;
     }
 
     /* ── Public API ───────────────────────────────────────── */
@@ -89,19 +90,6 @@ export class QuickCapture {
         if (!this._open) return;
         this._open = false;
         this._removeOverlay();
-    }
-
-    /* ── Keyboard ─────────────────────────────────────────── */
-
-    _onKeydown(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            if (this._open) {
-                this.close();
-            } else {
-                this.open();
-            }
-        }
     }
 
     /* ── FAB ──────────────────────────────────────────────── */
@@ -292,6 +280,7 @@ export class QuickCapture {
         var type = TYPES[typeIndex];
         var db   = this._db;
         var bus  = this._bus;
+        var self = this;
 
         if (type.id === 'task') {
             var nameInput     = overlay.querySelector('#qc-task-name');
@@ -310,14 +299,11 @@ export class QuickCapture {
                 updatedAt: now,
             };
 
-            try {
-                var gateway = new TaskGateway(db);
-                await gateway.createTask(data);
-                bus.publish('tasks:changed', null);
-                this._toast('Task added');
-            } catch (err) {
-                this._toast('Failed to add task', true);
-            }
+            var gateway = new TaskGateway(db);
+            this._dispatcher.dispatch('tarteeb:task-created', data, function () {
+                return gateway.createTask(data);
+            });
+            this._toast('Task added');
 
         } else if (type.id === 'note') {
             var titleInput   = overlay.querySelector('#qc-note-title');
@@ -341,14 +327,11 @@ export class QuickCapture {
                 updatedAt: now2,
             };
 
-            try {
-                var kGateway = new KnowledgeGateway(db);
-                await kGateway.createNote(noteData);
-                bus.publish('knowledge:changed', null);
-                this._toast('Note captured');
-            } catch (err) {
-                this._toast('Failed to capture note', true);
-            }
+            var kGateway = new KnowledgeGateway(db);
+            this._dispatcher.dispatch('tarteeb:note-created', noteData, function () {
+                return kGateway.createNote(noteData);
+            });
+            this._toast('Note captured');
 
         } else if (type.id === 'expense') {
             var amountInput = overlay.querySelector('#qc-expense-amount');
@@ -367,14 +350,11 @@ export class QuickCapture {
                 updatedAt: now3,
             };
 
-            try {
-                var fGateway = new FinanceGateway(db);
-                await fGateway.createTransaction(txData);
-                bus.publish('finance:changed', null);
-                this._toast('Expense logged');
-            } catch (err) {
-                this._toast('Failed to log expense', true);
-            }
+            var fGateway = new FinanceGateway(db);
+            this._dispatcher.dispatch('tarteeb:expense-created', txData, function () {
+                return fGateway.createTransaction(txData);
+            });
+            this._toast('Expense logged');
         }
 
         this.close();

@@ -22,10 +22,8 @@
 
 import { TaskStore } from '../state/task-store.js';
 import { TaskGateway } from '../../../persistence/gateways/task-gateway.js';
-import { createTaskSummary } from '../components/task-summary.js';
 import { createTaskForm } from '../components/task-form.js';
-import { createTaskCard } from '../components/task-card.js';
-import { createFilterBar } from '../components/task-filters.js';
+import { createKanbanBoard } from '../components/kanban-board.js';
 import { openEditModal } from '../components/task-edit-modal.js';
 import { formatMinutes } from '../domain/task-rules.js';
 
@@ -194,16 +192,11 @@ export class TasksView {
     _renderTodaySection(slot) {
         var store = this.store;
         if (!store) {
-            slot.innerHTML = '<div class="text-center py-20 text-text-tertiary text-[13px]">Loading tasks…</div>';
+            slot.innerHTML = '<div class="text-center py-20 text-text-tertiary text-[13px]">Loading tasks\u2026</div>';
             return;
         }
 
-        var cbs = this._cardCallbacks();
-
-        /* Summary stats */
-        var summary = store.getSummary();
-        var overdue = store.getOverdueTasks().length;
-        slot.appendChild(createTaskSummary({ pending: summary.pending, in_progress: summary.in_progress, completed: summary.completed, overdue: overdue }));
+        var self = this;
 
         /* Time summary */
         var timeStats = store.getTimeSummary();
@@ -214,10 +207,10 @@ export class TasksView {
                 '<div class="flex items-center gap-1.5 text-[11px] text-text-tertiary">' +
                     '<svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 opacity-50"><path d="M8 3.5a.5.5 0 01.5.5v4.25l3.15 1.89a.5.5 0 01-.5.87L7.76 8.87a.5.5 0 01-.26-.44v-4.7a.5.5 0 01.5-.5z"/><path fill-rule="evenodd" d="M8 16A8 8 0 108 0a8 8 0 000 16zm0-1A7 7 0 118 1a7 7 0 010 14z" clip-rule="evenodd"/></svg>' +
                     '<span>Est: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.totalEstimate) + '</strong></span>' +
-                    '<span class="text-white/[0.08]">·</span>' +
+                    '<span class="text-white/[0.08]">\u00b7</span>' +
                     '<span>Done: <strong class="text-accent-tasks font-medium">' + formatMinutes(timeStats.totalSpent) + '</strong></span>' +
                     (timeStats.remaining > 0
-                        ? '<span class="text-white/[0.08]">·</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
+                        ? '<span class="text-white/[0.08]">\u00b7</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
                         : '') +
                 '</div>';
             slot.appendChild(timeBar);
@@ -234,22 +227,25 @@ export class TasksView {
             },
         }));
 
-        /* Task list: overdue + active (excluding completed) */
-        var overdueTasks = store.getOverdueTasks();
-        var activeTasks  = store.getActiveTasks();
-        var combined = overdueTasks.concat(activeTasks);
+        /* Kanban board: overdue + active + completed */
+        var allTasks = store.getAllTasks
+            ? store.getAllTasks()
+            : store.getActiveTasks().concat(store.getCompletedTasks());
 
-        /* Deduplicate by id */
-        var seen = {};
-        var unique = [];
-        for (var i = 0; i < combined.length; i++) {
-            if (!seen[combined[i].id]) {
-                seen[combined[i].id] = true;
-                unique.push(combined[i]);
-            }
-        }
-
-        this._renderTaskList(slot, unique, cbs);
+        slot.appendChild(createKanbanBoard({
+            tasks: allTasks,
+            onDrop: function (taskId, newStatus) {
+                store.dispatch({ type: 'CHANGE_STATUS', payload: { id: taskId, status: newStatus } });
+            },
+            onEdit: function (id) {
+                var task = store.getTaskById(id);
+                if (!task) return;
+                openEditModal(task, store.getProjects(),
+                    function (patch) { store.dispatch({ type: 'UPDATE_TASK', payload: patch }); },
+                    function (taskId) { store.dispatch({ type: 'DELETE_TASK', payload: taskId }); }
+                );
+            },
+        }));
     }
 
     /* ── All Tasks ────────────────────────────────────────── */
@@ -257,17 +253,9 @@ export class TasksView {
     _renderAllSection(slot) {
         var store = this.store;
         if (!store) {
-            slot.innerHTML = '<div class="text-center py-20 text-text-tertiary text-[13px]">Loading tasks…</div>';
+            slot.innerHTML = '<div class="text-center py-20 text-text-tertiary text-[13px]">Loading tasks\u2026</div>';
             return;
         }
-
-        var self = this;
-        var cbs  = this._cardCallbacks();
-
-        /* Summary stats */
-        var summary = store.getSummary();
-        var overdue = store.getOverdueTasks().length;
-        slot.appendChild(createTaskSummary({ pending: summary.pending, in_progress: summary.in_progress, completed: summary.completed, overdue: overdue }));
 
         /* Time summary */
         var timeStats = store.getTimeSummary();
@@ -278,60 +266,14 @@ export class TasksView {
                 '<div class="flex items-center gap-1.5 text-[11px] text-text-tertiary">' +
                     '<svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 opacity-50"><path d="M8 3.5a.5.5 0 01.5.5v4.25l3.15 1.89a.5.5 0 01-.5.87L7.76 8.87a.5.5 0 01-.26-.44v-4.7a.5.5 0 01.5-.5z"/><path fill-rule="evenodd" d="M8 16A8 8 0 108 0a8 8 0 000 16zm0-1A7 7 0 118 1a7 7 0 010 14z" clip-rule="evenodd"/></svg>' +
                     '<span>Est: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.totalEstimate) + '</strong></span>' +
-                    '<span class="text-white/[0.08]">·</span>' +
+                    '<span class="text-white/[0.08]">\u00b7</span>' +
                     '<span>Done: <strong class="text-accent-tasks font-medium">' + formatMinutes(timeStats.totalSpent) + '</strong></span>' +
                     (timeStats.remaining > 0
-                        ? '<span class="text-white/[0.08]">·</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
+                        ? '<span class="text-white/[0.08]">\u00b7</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
                         : '') +
                 '</div>';
             slot.appendChild(timeBar);
         }
-
-        /* Filter/sort state — uses class-level fields (stable across re-renders) */
-        var renderList = function () {
-            var existing = slot.querySelector('.task-list-container');
-            if (existing) existing.remove();
-
-            var tasks = store.getActiveTasks();
-            var filter = self._allFilter;
-            var sort   = self._allSort;
-
-            if (filter !== 'all') {
-                if (filter === 'overdue') {
-                    tasks = store.getOverdueTasks();
-                } else {
-                    tasks = tasks.filter(function (t) { return t.status === filter; });
-                }
-            }
-
-            if (sort === 'dueDate') {
-                tasks = tasks.slice().sort(function (a, b) { return (a.dueDate || '9999').localeCompare(b.dueDate || '9999'); });
-            } else if (sort === 'created') {
-                tasks = tasks.slice().sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
-            }
-
-            var container = document.createElement('div');
-            container.className = 'task-list-container';
-
-            if (tasks.length === 0) {
-                container.innerHTML =
-                    '<div class="text-center py-16">' +
-                        '<div class="text-4xl mb-3 opacity-20">📋</div>' +
-                        '<p class="text-[14px] text-text-secondary font-medium">No matching tasks</p>' +
-                        '<p class="text-[12px] text-text-tertiary mt-1">Try a different filter or add a new task above.</p>' +
-                    '</div>';
-            } else {
-                var list = document.createElement('div');
-                list.className = 'space-y-1';
-
-                for (var i = 0; i < tasks.length; i++) {
-                    list.appendChild(createTaskCard(tasks[i], cbs));
-                }
-                container.appendChild(list);
-            }
-
-            slot.appendChild(container);
-        };
 
         /* Inline form */
         slot.appendChild(createTaskForm({
@@ -339,31 +281,25 @@ export class TasksView {
             onSubmit: function (data) { store.dispatch({ type: 'ADD_TASK', payload: data }); },
         }));
 
-        /* Filter bar — recreated on each renderList() with current state */
-        var renderFilterBar = function () {
-            var old = slot.querySelector('.tasks-filter-bar');
-            if (old) old.remove();
+        /* Kanban board: all tasks (including completed) */
+        var allTasks = store.getAllTasks
+            ? store.getAllTasks()
+            : store.getActiveTasks().concat(store.getCompletedTasks());
 
-            var bar = createFilterBar({
-                activeFilter: self._allFilter,
-                activeSort:   self._allSort,
-                onFilterChange: function (f) {
-                    self._allFilter = f;
-                    renderList();
-                    renderFilterBar();
-                },
-                onSortChange: function (s) {
-                    self._allSort = s;
-                    renderList();
-                    renderFilterBar();
-                },
-            });
-            bar.classList.add('tasks-filter-bar');
-            slot.insertBefore(bar, slot.querySelector('.task-list-container'));
-        };
-
-        renderFilterBar();
-        renderList();
+        slot.appendChild(createKanbanBoard({
+            tasks: allTasks,
+            onDrop: function (taskId, newStatus) {
+                store.dispatch({ type: 'CHANGE_STATUS', payload: { id: taskId, status: newStatus } });
+            },
+            onEdit: function (id) {
+                var task = store.getTaskById(id);
+                if (!task) return;
+                openEditModal(task, store.getProjects(),
+                    function (patch) { store.dispatch({ type: 'UPDATE_TASK', payload: patch }); },
+                    function (taskId) { store.dispatch({ type: 'DELETE_TASK', payload: taskId }); }
+                );
+            },
+        }));
     }
 
     /* ── Projects ─────────────────────────────────────────── */

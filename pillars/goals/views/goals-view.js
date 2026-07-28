@@ -1,8 +1,8 @@
 /**
- * Tarteeb — Goals View (Main Wrapper)
+ * Tarteeb — Goals View (Vision Board Wrapper)
  *
- * Top-level view for the Goals & Projects pillar. Manages section
- * switching (Active / Completed / Statistics), hydration,
+ * Top-level view for the Goals pillar. Manages section
+ * switching (Active / Completed / Stats), hydration,
  * and the shared goals-store instance.
  *
  * Lifecycle:
@@ -17,16 +17,15 @@
  * Design constraints:
  *   - Uses accent-goals color (#f472b6)
  *   - Single re-render trigger: 'goals:changed'
- *   - Every button wired to dispatch() → gateway
- *   - Imports GoalsStore (plural) from goals-store.js
- *   - Imports GoalsGateway (plural) from goals-gateway.js
+ *   - Vision Board with SVG circular progress rings
+ *   - Milestone pills with toggle animation
  */
 
 'use strict';
 
 import { GoalsStore } from '../state/goals-store.js';
 import { GoalsGateway } from '../../../persistence/gateways/goals-gateway.js';
-import { createGoalForm, createMilestoneForm } from '../components/goal-form.js';
+import { createGoalForm } from '../components/goal-form.js';
 import { createGoalBoard } from '../components/goal-board.js';
 
 var SECTIONS = [
@@ -41,6 +40,7 @@ export class GoalsView {
         this.store     = null;
         this.currentSection = 'active';
         this._unsubs   = [];
+        this._formRef  = null; /* reference to goal form for programmatic expand */
     }
 
     /* ── Lifecycle ────────────────────────────────────────── */
@@ -57,7 +57,7 @@ export class GoalsView {
 
         /* Main container */
         var main = document.createElement('div');
-        main.className = 'relative h-full p-6 md:p-8 max-w-4xl mx-auto';
+        main.className = 'relative h-full p-6 md:p-8 max-w-5xl mx-auto';
 
         /* Header */
         var header = document.createElement('header');
@@ -65,13 +65,13 @@ export class GoalsView {
         header.innerHTML =
             '<div class="flex items-end justify-between mb-1">' +
                 '<h1 class="text-[28px] font-heading font-semibold text-text-primary tracking-tight leading-none">' +
-                    'Goals & Projects' +
+                    'Goals' +
                 '</h1>' +
                 '<span class="text-[12px] font-medium text-text-disabled uppercase tracking-widest pb-1">' +
                     new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) +
                 '</span>' +
             '</div>' +
-            '<p class="text-[13px] text-text-tertiary mt-1">Set intentions, define sub-projects, track progress.</p>';
+            '<p class="text-[13px] text-text-tertiary mt-1">Set your vision. Track your milestones. Achieve greatness.</p>';
 
         /* Section Tabs */
         var tabs = document.createElement('div');
@@ -136,6 +136,7 @@ export class GoalsView {
         this._unsubs = [];
         this.container = null;
         this.store     = null;
+        this._formRef  = null;
     }
 
     /* ── Shared Callbacks ─────────────────────────────────── */
@@ -163,7 +164,7 @@ export class GoalsView {
             onDelete: function (id) {
                 var goal = store.getGoalById(id);
                 var name = goal ? goal.title : 'this goal';
-                if (confirm('Permanently delete "' + name + '" and all its sub-projects?')) {
+                if (confirm('Permanently delete "' + name + '" and all its milestones?')) {
                     store.dispatch({ type: 'DELETE_GOAL', payload: id });
                 }
             },
@@ -225,7 +226,7 @@ export class GoalsView {
             '</span>';
         slot.appendChild(label);
 
-        /* Goal board */
+        /* Vision Board */
         slot.appendChild(createGoalBoard({
             goals:       activeGoals,
             milestones:  store.milestones,
@@ -237,16 +238,21 @@ export class GoalsView {
             onToggleMilestone: cbs.onToggleMilestone,
             onDeleteMilestone: cbs.onDeleteMilestone,
             onAddMilestone: cbs.onAddMilestone,
+            onOpenQuickCapture: function () {
+                /* Scroll to goal form if it exists */
+                if (self._formRef) {
+                    self._formRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            },
         }));
 
         /* Goal creation form */
-        slot.appendChild(createGoalForm({
+        var form = createGoalForm({
             categories: store.getAllCategories(),
             onSubmit: function (data) {
                 self._dispatch('ADD_GOAL', data);
                 /* After goal is created, add any inline milestones */
                 if (data.milestones && data.milestones.length > 0) {
-                    /* Wait for the next state update so we have the new goal's id */
                     setTimeout(function () {
                         var latestGoals = store.goals;
                         var newest = latestGoals[latestGoals.length - 1];
@@ -264,7 +270,9 @@ export class GoalsView {
                     }, 50);
                 }
             },
-        }));
+        });
+        self._formRef = form;
+        slot.appendChild(form);
     }
 
     /* ── Completed Section ────────────────────────────────── */
@@ -456,12 +464,12 @@ export class GoalsView {
         if (orphanGoals.length > 0) {
             var orphanLabel = document.createElement('h3');
             orphanLabel.className = 'text-[13px] font-medium text-status-warning mb-3 mt-6';
-            orphanLabel.textContent = 'Goals Without Sub-Projects';
+            orphanLabel.textContent = 'Goals Without Milestones';
             slot.appendChild(orphanLabel);
 
             var orphanNote = document.createElement('p');
             orphanNote.className = 'text-[12px] text-text-tertiary mb-3';
-            orphanNote.textContent = 'These goals have no defined sub-projects. Breaking them into steps improves trackability.';
+            orphanNote.textContent = 'Breaking goals into milestones improves trackability.';
             slot.appendChild(orphanNote);
 
             var orphanList = document.createElement('div');
@@ -487,7 +495,7 @@ export class GoalsView {
 
                 var orphanBadge = document.createElement('span');
                 orphanBadge.className = 'text-[10px] text-status-warning bg-status-warning/10 px-2 py-0.5 rounded font-medium';
-                orphanBadge.textContent = 'No sub-projects';
+                orphanBadge.textContent = 'No milestones';
                 orphanRow.appendChild(orphanBadge);
 
                 orphanList.appendChild(orphanRow);
@@ -502,7 +510,7 @@ export class GoalsView {
                 '<div class="text-center py-12">' +
                     '<div class="text-5xl mb-3 opacity-20">\uD83D\uDCCA</div>' +
                     '<p class="text-[14px] text-text-secondary font-medium">No statistics yet</p>' +
-                    '<p class="text-[12px] text-text-tertiary mt-1">Create goals and track sub-projects to see your progress.</p>' +
+                    '<p class="text-[12px] text-text-tertiary mt-1">Create goals and track milestones to see your progress.</p>' +
                 '</div>';
         }
     }
@@ -612,8 +620,8 @@ function _deadlineRow(goal, progress) {
     var pct = document.createElement('span');
     pct.className = 'text-[11px] text-text-disabled tabular-nums';
     pct.textContent = progress.total > 0
-        ? progress.completed + '/' + progress.total + ' sub-projects'
-        : 'No sub-projects';
+        ? progress.completed + '/' + progress.total + ' milestones'
+        : 'No milestones';
     titleCol.appendChild(pct);
 
     left.appendChild(titleCol);

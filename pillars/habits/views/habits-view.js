@@ -22,7 +22,7 @@
 import { HabitStore, FREQUENCY, FREQUENCY_LABELS, DAY_LABELS, today } from '../state/habit-store.js';
 import { HabitGateway } from '../../../persistence/gateways/habit-gateway.js';
 import { createHabitForm } from '../components/habit-form.js';
-import { createHabitList } from '../components/habit-list.js';
+import { createHabitCard } from '../components/habit-card.js';
 
 var SECTIONS = [
     { id: 'today',   label: 'Today',       description: 'Daily check-in' },
@@ -210,19 +210,6 @@ export class HabitsView {
             }
         }
 
-        /* Build streaks + heatmap for due habits */
-        var streaks = {};
-        var heatmaps = {};
-        for (var j = 0; j < dueHabits.length; j++) {
-            var h = dueHabits[j];
-            streaks[h.id] = {
-                streak:         store.getStreak(h.id),
-                bestStreak:     store.getBestStreak(h.id),
-                completionRate: store.getCompletionRate(h.id),
-            };
-            heatmaps[h.id] = store.getWeekHeatmap(h.id);
-        }
-
         /* Section label */
         var label = document.createElement('div');
         label.className = 'flex items-center justify-between mb-3';
@@ -233,32 +220,49 @@ export class HabitsView {
             '</span>';
         slot.appendChild(label);
 
-        /* List */
-        slot.appendChild(createHabitList({
-            habits:       dueHabits,
-            streaks:      streaks,
-            completedMap: completedMap,
-            heatmapData:  heatmaps,
-            onToggle:     function (id) { self._dispatch('TOGGLE_COMPLETE', { habitId: id }); },
-            onDelete:     function (id) {
-                var habit = store.getHabitById(id);
-                if (confirm('Delete "' + (habit ? habit.name : '') + '"?')) {
-                    self._dispatch('DELETE_HABIT', id);
-                }
-            },
-        }));
+        /* Habit cards grid */
+        if (dueHabits.length > 0) {
+            var cardsGrid = document.createElement('div');
+            cardsGrid.className = 'habit-cards-grid';
 
-        /* Inline form */
+            for (var j = 0; j < dueHabits.length; j++) {
+                var h = dueHabits[j];
+                cardsGrid.appendChild(createHabitCard({
+                    habit:       h,
+                    heatmap30:   store.getMonthlyData(h.id),
+                    streak:      store.getStreak(h.id),
+                    bestStreak:  store.getBestStreak(h.id),
+                    isTodayDone: !!completedMap[h.id],
+                    onToggleDay: function (dateStr) {
+                        return function () {
+                            self._dispatch('TOGGLE_COMPLETE', { habitId: h.id, date: dateStr });
+                        };
+                    }(todayStr),
+                    onArchive: function (id) { self._dispatch('ARCHIVE_HABIT', id); },
+                    onDelete:  function (id) {
+                        var habit = store.getHabitById(id);
+                        if (confirm('Delete "' + (habit ? habit.name : '') + '"?')) {
+                            self._dispatch('DELETE_HABIT', id);
+                        }
+                    },
+                }));
+            }
+
+            slot.appendChild(cardsGrid);
+        }
+
+        /* Empty state */
         if (dueHabits.length === 0 && store.getActiveHabits().length === 0) {
             var emptyHint = document.createElement('div');
             emptyHint.className = 'text-center py-8';
             emptyHint.innerHTML =
                 '<div class="text-4xl mb-3 opacity-20">\u26A1</div>' +
                 '<p class="text-[14px] text-text-secondary font-medium mb-1">No habits to track today</p>' +
-                '<p class="text-[12px] text-text-tertiary mb-4">Create habits in the All Habits tab to start building consistency.</p>';
+                '<p class="text-[12px] text-text-tertiary mb-4">Create habits below to start building consistency.</p>';
             slot.appendChild(emptyHint);
         }
 
+        /* Inline form */
         slot.appendChild(createHabitForm({
             categories: store.getAllCategories(),
             onSubmit: function (data) { self._dispatch('ADD_HABIT', data); },
@@ -275,7 +279,6 @@ export class HabitsView {
         }
 
         var self = this;
-        var cbs  = this._listCallbacks();
 
         /* Archive toggle */
         var archiveRow = document.createElement('div');
@@ -305,38 +308,41 @@ export class HabitsView {
         archiveRow.appendChild(archiveBtn);
         slot.appendChild(archiveRow);
 
-        /* Habit list */
+        /* Habit cards */
         var habits = this._showArchived ? store.getArchivedHabits() : store.getActiveHabits();
-
-        var streaks = {};
-        var heatmaps = {};
-        var completedMap = {};
         var todayStr = today();
 
-        for (var i = 0; i < habits.length; i++) {
-            var h = habits[i];
-            streaks[h.id] = {
-                streak:         store.getStreak(h.id),
-                bestStreak:     store.getBestStreak(h.id),
-                completionRate: store.getCompletionRate(h.id),
-            };
-            heatmaps[h.id] = store.getWeekHeatmap(h.id);
-            if (!h.archived && store.isHabitCompletedOnDate(h.id, todayStr)) {
-                completedMap[h.id] = true;
-            }
-        }
+        if (habits.length > 0) {
+            var cardsGrid = document.createElement('div');
+            cardsGrid.className = 'habit-cards-grid';
 
-        slot.appendChild(createHabitList({
-            habits:        habits,
-            streaks:       streaks,
-            completedMap:  completedMap,
-            heatmapData:   heatmaps,
-            onToggle:      cbs.onToggle,
-            onArchive:     cbs.onArchive,
-            onRestore:     cbs.onRestore,
-            onDelete:      cbs.onDelete,
-            showArchived:  this._showArchived,
-        }));
+            for (var i = 0; i < habits.length; i++) {
+                var h = habits[i];
+                var isTodayDone = !h.archived && store.isHabitCompletedOnDate(h.id, todayStr);
+
+                cardsGrid.appendChild(createHabitCard({
+                    habit:       h,
+                    heatmap30:   store.getMonthlyData(h.id),
+                    streak:      store.getStreak(h.id),
+                    bestStreak:  store.getBestStreak(h.id),
+                    isTodayDone: isTodayDone,
+                    onToggleDay: function (habitId) {
+                        return function (dateStr) {
+                            self._dispatch('TOGGLE_COMPLETE', { habitId: habitId, date: dateStr });
+                        };
+                    }(h.id),
+                    onArchive: function (id) { self._dispatch('ARCHIVE_HABIT', id); },
+                    onDelete:  function (id) {
+                        var habit = store.getHabitById(id);
+                        if (confirm('Delete "' + (habit ? habit.name : '') + '"?')) {
+                            self._dispatch('DELETE_HABIT', id);
+                        }
+                    },
+                }));
+            }
+
+            slot.appendChild(cardsGrid);
+        }
 
         /* Inline form (only when viewing active habits) */
         if (!this._showArchived) {

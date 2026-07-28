@@ -43,6 +43,8 @@ import { KnowledgeGateway } from '../../../persistence/gateways/knowledge-gatewa
 
 import { FinanceGateway } from '../../../persistence/gateways/finance-gateway.js';
 
+import { OptimisticDispatcher } from '../../../core/events/optimistic-dispatcher.js';
+
 /* ── Constants ───────────────────────────────────────────── */
 
 var WIDGET_IDS = {
@@ -62,12 +64,13 @@ var QUICK_CAPTURE_TYPES = [
 
 export class DashboardView {
     constructor() {
-        this.container = null;
-        this.stores    = {};
-        this._unsubs   = [];
-        this._booted   = false;
-        this._fabEl    = null;
-        this._qcOpen   = false;
+        this.container   = null;
+        this.stores      = {};
+        this._dispatcher = null;
+        this._unsubs     = [];
+        this._booted     = false;
+        this._fabEl      = null;
+        this._qcOpen     = false;
     }
 
     /* ── Lifecycle ────────────────────────────────────────── */
@@ -150,6 +153,9 @@ export class DashboardView {
         this._db  = db;
         this._bus = bus;
 
+        /* Optimistic dispatcher for zero-latency UI */
+        this._dispatcher = new OptimisticDispatcher(bus);
+
         /* Subscribe to change streams — only the two we care about */
         var self = this;
         this._unsubs.push(
@@ -160,6 +166,18 @@ export class DashboardView {
             bus.subscribe('habits:changed', function () {
                 self._refreshWidget('habits');
                 self._updateQuickStats();
+            }),
+            /* ── Optimistic: instant DOM injection ── */
+            bus.subscribe('tarteeb:task-created', function (item) {
+                self._injectOptimisticTask(item);
+            }),
+            bus.subscribe('tarteeb:task-confirmed', function (data) {
+                self._reconcileOptimisticTask(data.tempId, data.saved);
+            }),
+            bus.subscribe('tarteeb:sync-error', function (data) {
+                if (data.eventType === 'tarteeb:task-created') {
+                    self._revertOptimisticTask(data);
+                }
             }),
         );
 
@@ -178,13 +196,14 @@ export class DashboardView {
         for (var i = 0; i < this._unsubs.length; i++) {
             this._unsubs[i]();
         }
-        this._unsubs = [];
-        this.stores  = {};
-        this._db     = null;
-        this._bus    = null;
-        this.container = null;
-        this._booted   = false;
-        this._qcOpen   = false;
+        this._unsubs     = [];
+        this.stores      = {};
+        this._db         = null;
+        this._bus        = null;
+        this._dispatcher = null;
+        this.container   = null;
+        this._booted     = false;
+        this._qcOpen     = false;
 
         /* Remove FAB + Quick Capture overlay if present */
         if (this._fabEl && this._fabEl.parentNode) {
@@ -470,17 +489,11 @@ export class DashboardView {
                 updatedAt: now,
             };
 
-            try {
-                var gateway = new TaskGateway(db);
-                var saved = await gateway.createTask(data);
-                if (this.stores.tasks) {
-                    this.stores.tasks.tasks.push(saved);
-                    bus.publish('tasks:changed', this.stores.tasks.getStateSnapshot());
-                }
-                this._showToast('Task added');
-            } catch (err) {
-                this._showToast('Failed to add task', true);
-            }
+            var gateway = new TaskGateway(db);
+            this._dispatcher.dispatch('tarteeb:task-created', data, function () {
+                return gateway.createTask(data);
+            });
+            this._showToast('Task added');
 
         } else if (type.id === 'note') {
             var titleInput = overlay.querySelector('#dash-qc-note-title');
@@ -566,11 +579,148 @@ export class DashboardView {
             }, 200);
         }, 2200);
     }
+
+    /* ── Optimistic UI: instant DOM injection ─────────────── */
+
+    /**
+     * Inject a task row instantly from the optimistic event payload.
+     * Hides the empty state, prepends the row with a slide-in animation.
+     * @param {Object} task — optimistic task payload (with temp id)
+     */
+    _injectOptimisticTask(task) {
+        if (!this.container || !this._booted) return;
+        var slot = this._slot(WIDGET_IDS.tasks);
+        if (!slot) return;
+
+        /* 1. Hide empty state if present */
+        var emptyEl = slot.querySelector('.dash-focus-empty');
+        if (emptyEl) {
+            emptyEl.style.display = 'none';
+        }
+
+        /* 2. Find or create the task list container */
+        var list = slot.querySelector('.dash-focus-list');
+        if (!list) {
+            list = document.createElement('div');
+            list.className = 'dash-focus-list space-y-1.5';
+            slot.appendChild(list);
+        }
+
+        /* 3. Create row and prepend with slide-in animation */
+        var row = _createTaskRow(task);
+        row.style.opacity   = '0';
+        row.style.transform = 'translateY(-8px)';
+        list.insertBefore(row, list.firstChild);
+
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                row.style.transition = 'opacity 200ms ease, transform 200ms ease';
+                row.style.opacity    = '1';
+                row.style.transform  = 'translateY(0)';
+            });
+        });
+
+        this._updateQuickStats();
+    }
+
+    /**
+     * Reconcile a temp id with the real persisted id.
+     * @param {string} tempId — optimistic temp id
+     * @param {Object} saved — real saved item from gateway (has real id)
+     */
+    _reconcileOptimisticTask(tempId, saved) {
+        if (!this.container) return;
+        var slot = this._slot(WIDGET_IDS.tasks);
+        if (!slot) return;
+
+        var row = slot.querySelector('[data-task-id="' + tempId + '"]');
+        if (row && saved && saved.id) {
+            row.dataset.taskId = saved.id;
+        }
+    }
+
+    /**
+     * Revert an optimistic DOM node on sync failure.
+     * Slides the row out, removes it, re-shows empty state if list is empty.
+     * @param {{ tempId: string, eventType: string, error: Error }} data
+     */
+    _revertOptimisticTask(data) {
+        if (!this.container) return;
+        var slot = this._slot(WIDGET_IDS.tasks);
+        if (!slot) return;
+
+        var row = slot.querySelector('[data-task-id="' + data.tempId + '"]');
+        if (row) {
+            row.style.transition = 'opacity 150ms ease, transform 150ms ease';
+            row.style.opacity    = '0';
+            row.style.transform  = 'translateX(20px)';
+
+            var self = this;
+            setTimeout(function () {
+                if (row.parentNode) row.parentNode.removeChild(row);
+
+                /* Re-show empty state if list is now empty */
+                var list = slot.querySelector('.dash-focus-list');
+                if (list && list.children.length === 0) {
+                    if (list.parentNode) list.parentNode.removeChild(list);
+                    var emptyEl = slot.querySelector('.dash-focus-empty');
+                    if (emptyEl) emptyEl.style.display = '';
+                }
+                self._updateQuickStats();
+            }, 150);
+        }
+
+        this._showToast('Failed to save — reverted', true);
+    }
 }
 
 /* ================================================================
    WIDGET BUILDERS — Pure functions (Focus Mode)
    ================================================================ */
+
+/* ── Optimistic: create a task row from payload (no store needed) ── */
+
+function _createTaskRow(t) {
+    var isDone = t.status === 'completed';
+
+    var row = document.createElement('div');
+    row.className = [
+        'task-row dash-row flex items-center gap-3 px-4 py-3 rounded-xl',
+        'bg-white/[0.02] hover:bg-white/[0.05]',
+        'cursor-pointer group',
+        isDone ? 'is-done' : '',
+    ].join(' ');
+    row.dataset.taskId = t.id;
+
+    /* Custom checkbox */
+    var checkbox = document.createElement('button');
+    checkbox.type = 'button';
+    checkbox.className = 'task-checkbox' + (isDone ? ' is-checked' : '');
+    checkbox.innerHTML = '<svg class="checkmark" viewBox="0 0 12 12" fill="none" width="10" height="10">' +
+        '<path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    row.appendChild(checkbox);
+
+    /* Title */
+    var title = document.createElement('span');
+    title.className = [
+        'task-title flex-1 text-[13px] truncate',
+        isDone ? 'text-text-disabled' : 'text-text-secondary',
+    ].join(' ');
+    title.textContent = t.name || t.title || 'Untitled';
+    row.appendChild(title);
+
+    /* Priority badge */
+    var badge = document.createElement('span');
+    var badgeColor =
+        t.priority === 'high'   ? 'text-status-error bg-status-error/10' :
+        t.priority === 'medium' ? 'text-status-warning bg-status-warning/10' :
+        'text-text-disabled bg-white/[0.04]';
+    badge.className = 'flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md uppercase tracking-wider ' + badgeColor;
+    badge.textContent = (t.priority || 'med').slice(0, 3);
+    row.appendChild(badge);
+
+    return row;
+}
 
 /* ── Tasks Focus Widget ──────────────────────────────────── */
 
@@ -596,16 +746,18 @@ function _renderTasksFocus(slot, store) {
 
     /* Empty state */
     if (top3.length === 0) {
-        slot.appendChild(_emptyState(
+        var emptyWrap = _emptyState(
             '\uD83C\uDF1F',
             'No tasks for today',
             'All clear — enjoy your focus time.'
-        ));
+        );
+        emptyWrap.classList.add('dash-focus-empty');
+        slot.appendChild(emptyWrap);
         return;
     }
 
     var list = document.createElement('div');
-    list.className = 'space-y-1.5';
+    list.className = 'dash-focus-list space-y-1.5';
 
     for (var j = 0; j < top3.length; j++) {
         var t = top3[j];
