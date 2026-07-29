@@ -267,8 +267,16 @@ function _aggregateHabits(habits, records) {
     };
 }
 
-/* ─────────────────────────────────~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   Chart.js Shared Options — Dark mode
+/* ─────────────────────────────────~~~~~~~~~~~~~~~~~~~~~~~~────
+   CSS Variable Resolver for Chart.js
+   ──────────────────────────────────────────────────────────── */
+
+function _cssVar(name, fallback) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
+/* ─────────────────────────────────~~~~~~~~~~~~~~~~────────────
+   Chart.js Shared Options
    ───────────────────────────────────────────────────────────── */
 
 function _chartOptions() {
@@ -285,7 +293,7 @@ function _chartOptions() {
                 position: 'top',
                 align: 'end',
                 labels: {
-                    color: '#71717a',
+                    color: _cssVar('--text-tertiary', '#71717a'),
                     font: { family: "'Inter', system-ui, sans-serif", size: 11, weight: '500' },
                     boxWidth: 8,
                     boxHeight: 8,
@@ -296,14 +304,14 @@ function _chartOptions() {
                 },
             },
             tooltip: {
-                backgroundColor: 'rgba(28, 28, 32, 0.95)',
-                titleColor: '#f4f4f5',
-                bodyColor: '#a1a1aa',
+                backgroundColor: _cssVar('--chart-tooltip-bg', 'rgba(28, 28, 32, 0.95)'),
+                titleColor: _cssVar('--text-primary', '#f4f4f5'),
+                bodyColor: _cssVar('--text-secondary', '#a1a1aa'),
                 titleFont: { family: "'Inter', system-ui, sans-serif", size: 12, weight: '600' },
                 bodyFont: { family: "'Inter', system-ui, sans-serif", size: 11, weight: '400' },
                 padding: { x: 12, y: 8 },
                 cornerRadius: 10,
-                borderColor: 'rgba(255, 255, 255, 0.06)',
+                borderColor: _cssVar('--chart-grid-color', 'rgba(255, 255, 255, 0.06)'),
                 borderWidth: 1,
                 displayColors: true,
                 boxWidth: 8,
@@ -323,7 +331,7 @@ function _chartOptions() {
                 grid: { display: false },
                 border: { display: false },
                 ticks: {
-                    color: '#52525b',
+                    color: _cssVar('--text-disabled', '#52525b'),
                     font: { family: "'Inter', system-ui, sans-serif", size: 10, weight: '500' },
                     maxRotation: 0,
                     autoSkipPadding: 12,
@@ -332,12 +340,12 @@ function _chartOptions() {
             y: {
                 grid: {
                     display: true,
-                    color: 'rgba(255, 255, 255, 0.03)',
+                    color: _cssVar('--chart-grid-color', 'rgba(0, 0, 0, 0.06)'),
                     lineWidth: 1,
                 },
                 border: { display: false },
                 ticks: {
-                    color: '#52525b',
+                    color: _cssVar('--text-disabled', '#52525b'),
                     font: { family: "'Inter', system-ui, sans-serif", size: 10, weight: '500' },
                     padding: 8,
                     stepSize: 1,
@@ -554,11 +562,11 @@ export class AnalyticsView {
                     borderWidth: 2.5,
                     pointRadius: 3,
                     pointBackgroundColor: '#34d399',
-                    pointBorderColor: '#0f0f11',
+                    pointBorderColor: _cssVar('--surface-canvas', '#0f0f11'),
                     pointBorderWidth: 2,
                     pointHoverRadius: 6,
                     pointHoverBackgroundColor: '#34d399',
-                    pointHoverBorderColor: '#0f0f11',
+                    pointHoverBorderColor: _cssVar('--surface-canvas', '#0f0f11'),
                     pointHoverBorderWidth: 2.5,
                 }],
             },
@@ -579,9 +587,9 @@ export class AnalyticsView {
                 datasets: [{
                     data: aggregated.values,
                     backgroundColor: aggregated.colors,
-                    borderColor: '#161619',
+                    borderColor: _cssVar('--surface-raised', '#161619'),
                     borderWidth: 3,
-                    hoverBorderColor: '#1c1c20',
+                    hoverBorderColor: _cssVar('--surface-elevated', '#1c1c20'),
                     hoverOffset: 8,
                 }],
             },
@@ -592,14 +600,14 @@ export class AnalyticsView {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(28, 28, 32, 0.95)',
-                        titleColor: '#f4f4f5',
-                        bodyColor: '#a1a1aa',
+                        backgroundColor: _cssVar('--chart-tooltip-bg', 'rgba(28, 28, 32, 0.95)'),
+                        titleColor: _cssVar('--text-primary', '#f4f4f5'),
+                        bodyColor: _cssVar('--text-secondary', '#a1a1aa'),
                         titleFont: { family: "'Inter', system-ui, sans-serif", size: 12, weight: '600' },
                         bodyFont: { family: "'Inter', system-ui, sans-serif", size: 11, weight: '400' },
                         padding: { x: 12, y: 8 },
                         cornerRadius: 10,
-                        borderColor: 'rgba(255, 255, 255, 0.06)',
+                        borderColor: _cssVar('--chart-grid-color', 'rgba(255, 255, 255, 0.06)'),
                         borderWidth: 1,
                         displayColors: true,
                         boxWidth: 8,

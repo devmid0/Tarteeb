@@ -233,6 +233,39 @@ export class Shell {
         /* Hidden file input for import */
         html += '<input type="file" accept=".json" id="import-file-input" style="display:none">';
 
+        /* ── Theme Selector ── */
+        var currentTheme = localStorage.getItem('tarteeb_theme') || 'default';
+        function _themeBtnCls(id) {
+            var active = id === currentTheme;
+            return 'theme-btn flex-1 h-6 rounded-md text-[10px] font-medium border transition-all duration-150 ' +
+                   (active
+                       ? 'bg-accent-tasks/15 border-accent-tasks/30 text-accent-tasks'
+                       : 'bg-surface-raised border-white/[0.06] text-text-tertiary hover:text-text-primary hover:bg-white/[0.04]');
+        }
+        html +=
+            '<div class="px-2 pt-2 pb-0.5">' +
+                (showLabel
+                    ? '<span class="text-[10px] font-medium text-text-disabled uppercase tracking-wider">Theme</span>'
+                    : '') +
+            '</div>' +
+            '<div class="flex gap-1 px-2 pb-1">' +
+                '<button id="theme-default"' +
+                        ' class="' + _themeBtnCls('default') + '"' +
+                        ' title="' + (showLabel ? '' : 'Default (Dark)') + '">' +
+                    (showLabel ? 'Default' : '\u25CF') +
+                '</button>' +
+                '<button id="theme-light"' +
+                        ' class="' + _themeBtnCls('light') + '"' +
+                        ' title="' + (showLabel ? '' : 'Light') + '">' +
+                    (showLabel ? 'Light' : '\u25CB') +
+                '</button>' +
+                '<button id="theme-ocean"' +
+                        ' class="' + _themeBtnCls('ocean') + '"' +
+                        ' title="' + (showLabel ? '' : 'Ocean (Premium)') + '">' +
+                    (showLabel ? 'Ocean \uD83D\uDD12' : '\uD83D\uDD12') +
+                '</button>' +
+            '</div>';
+
         /* Collapse toggle */
         html +=
                 '<button id="sidebar-toggle"' +
@@ -287,6 +320,16 @@ export class Shell {
         this.mainEl.style.paddingBottom = '56px';
     }
 
+    /* ── Theme ────────────────────────────────────────────── */
+
+    _applyTheme(theme) {
+        var el = document.documentElement;
+        el.setAttribute('data-theme', theme);
+        el.classList.toggle('dark', theme !== 'light');
+        localStorage.setItem('tarteeb_theme', theme);
+        this._renderSidebar();
+    }
+
     /* ── Event Binding ────────────────────────────────────── */
 
     _bindSidebarEvents() {
@@ -323,6 +366,31 @@ export class Shell {
             });
             importFile.addEventListener('change', function (e) {
                 self.importLocalData(e);
+            });
+        }
+
+        /* ── Theme buttons ── */
+        var themeDefault = document.getElementById('theme-default');
+        var themeLight   = document.getElementById('theme-light');
+        var themeOcean   = document.getElementById('theme-ocean');
+
+        function _setTheme(t) { self._applyTheme(t); }
+
+        if (themeDefault) {
+            themeDefault.addEventListener('click', function () { _setTheme('default'); });
+        }
+        if (themeLight) {
+            themeLight.addEventListener('click', function () { _setTheme('light'); });
+        }
+        if (themeOcean) {
+            themeOcean.addEventListener('click', function () {
+                if (localStorage.getItem('tarteeb_premium') === 'true') {
+                    _setTheme('ocean');
+                } else {
+                    import('../composites/cloud-sync.js').then(function (mod) {
+                        mod.showPaywall();
+                    });
+                }
             });
         }
 

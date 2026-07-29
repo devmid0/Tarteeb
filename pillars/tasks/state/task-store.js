@@ -35,6 +35,8 @@ import {
     STATUS,
 } from '../domain/task-rules.js';
 
+import { canCreateEntity, showPaywall } from '../../core/freemium.js';
+
 export class TaskStore {
     constructor(eventBus, taskGateway) {
         this.eventBus = eventBus;
@@ -89,6 +91,12 @@ export class TaskStore {
         var validation = validateTask(data);
         if (!validation.valid) {
             this.eventBus.publish('tasks:validation-error', validation.errors);
+            return null;
+        }
+
+        if (!canCreateEntity('tasks', this.tasks.length)) {
+            showPaywall();
+            this.eventBus.publish('tasks:freemium-blocked', { entityType: 'tasks', limit: 15 });
             return null;
         }
 
@@ -205,13 +213,6 @@ export class TaskStore {
 
         if (!data.name) {
             this.eventBus.publish('tasks:validation-error', ['Project name is required']);
-            return null;
-        }
-
-        var { canCreateEntity, showPaywall } = await import('../../core/freemium.js');
-        if (!canCreateEntity('projects', this.projects.length)) {
-            showPaywall();
-            this.eventBus.publish('tasks:freemium-blocked', { entityType: 'projects', limit: 3 });
             return null;
         }
 

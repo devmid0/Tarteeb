@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
+    <script>
+        (function () {
+            var t = localStorage.getItem('tarteeb_theme') || 'default';
+            if (t === 'ocean' && localStorage.getItem('tarteeb_premium') !== 'true') t = 'default';
+            document.documentElement.setAttribute('data-theme', t);
+            document.documentElement.classList.toggle('dark', t !== 'light');
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0f0f11">
+    <meta name="theme-color" content="var(--surface-canvas, #0f0f11)">
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" href="./assets/icons/icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
@@ -23,17 +31,17 @@
                     },
                     colors: {
                         surface: {
-                            canvas:    '#0f0f11',
-                            raised:    '#161619',
-                            elevated:  '#1c1c20',
-                            floating:  '#232328',
-                            modal:     '#2c2c31',
+                            canvas:    'var(--surface-canvas, #0f0f11)',
+                            raised:    'var(--surface-raised, #161619)',
+                            elevated:  'var(--surface-elevated, #1c1c20)',
+                            floating:  'var(--surface-floating, #232328)',
+                            modal:     'var(--surface-modal, #2c2c31)',
                         },
                         text: {
-                            primary:   '#f4f4f5',
-                            secondary: '#a1a1aa',
-                            tertiary:  '#71717a',
-                            disabled:  '#52525b',
+                            primary:   'var(--text-primary, #f4f4f5)',
+                            secondary: 'var(--text-secondary, #a1a1aa)',
+                            tertiary:  'var(--text-tertiary, #71717a)',
+                            disabled:  'var(--text-disabled, #52525b)',
                         },
                         accent: {
                             finance:   '#60a5fa',
@@ -50,11 +58,11 @@
                         },
                     },
                     boxShadow: {
-                        surface:  '0 1px 2px rgba(0,0,0,0.4)',
-                        raised:   '0 4px 12px rgba(0,0,0,0.5)',
-                        elevated: '0 8px 24px rgba(0,0,0,0.6)',
-                        floating: '0 12px 40px rgba(0,0,0,0.7)',
-                        modal:    '0 20px 60px rgba(0,0,0,0.8)',
+                        surface:  'var(--shadow-surface, 0 1px 2px rgba(0,0,0,0.4))',
+                        raised:   'var(--shadow-raised, 0 4px 12px rgba(0,0,0,0.5))',
+                        elevated: 'var(--shadow-elevated, 0 8px 24px rgba(0,0,0,0.6))',
+                        floating: 'var(--shadow-floating, 0 12px 40px rgba(0,0,0,0.7))',
+                        modal:    'var(--shadow-modal, 0 20px 60px rgba(0,0,0,0.8))',
                     },
                     animation: {
                         entrance:    'entrance 350ms cubic-bezier(0.34,1.56,0.64,1) forwards',
@@ -98,6 +106,91 @@
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
         html { -webkit-overflow-scrolling: touch; }
+
+        /* ── Theme: Default (Dark) ── */
+        :root, [data-theme="default"] {
+            --surface-canvas:   #0f0f11;
+            --surface-raised:   #161619;
+            --surface-elevated: #1c1c20;
+            --surface-floating: #232328;
+            --surface-modal:    #2c2c31;
+            --text-primary:     #f4f4f5;
+            --text-secondary:   #a1a1aa;
+            --text-tertiary:    #71717a;
+            --text-disabled:    #52525b;
+            --chart-grid-color: rgba(255, 255, 255, 0.03);
+            --chart-tooltip-bg: rgba(28, 28, 32, 0.95);
+            --overlay-white:    rgba(255, 255, 255, 0.04);
+            --overlay-white-hover: rgba(255, 255, 255, 0.08);
+            --border-white:     rgba(255, 255, 255, 0.06);
+            --border-white-hover: rgba(255, 255, 255, 0.1);
+            --border-white-active: rgba(255, 255, 255, 0.04);
+            --shadow-surface:   0 1px 2px rgba(0,0,0,0.4);
+            --shadow-raised:    0 4px 12px rgba(0,0,0,0.5);
+            --shadow-elevated:  0 8px 24px rgba(0,0,0,0.6);
+            --shadow-floating:  0 12px 40px rgba(0,0,0,0.7);
+            --shadow-modal:     0 20px 60px rgba(0,0,0,0.8);
+            color-scheme: dark;
+        }
+
+        /* ── Theme: Light ── */
+        [data-theme="light"] {
+            --surface-canvas:   #f5f5f7;
+            --surface-raised:   #ffffff;
+            --surface-elevated: #eeeeef;
+            --surface-floating: #e4e4e7;
+            --surface-modal:    #ffffff;
+            --text-primary:     #18181b;
+            --text-secondary:   #52525b;
+            --text-tertiary:    #a1a1aa;
+            --text-disabled:    #d4d4d8;
+            --chart-grid-color: rgba(0, 0, 0, 0.06);
+            --chart-tooltip-bg: rgba(238, 238, 239, 0.95);
+            --overlay-white:    rgba(0, 0, 0, 0.03);
+            --overlay-white-hover: rgba(0, 0, 0, 0.06);
+            --border-white:     rgba(0, 0, 0, 0.06);
+            --border-white-hover: rgba(0, 0, 0, 0.1);
+            --border-white-active: rgba(0, 0, 0, 0.04);
+            --shadow-surface:   0 1px 2px rgba(0,0,0,0.05);
+            --shadow-raised:    0 2px 8px rgba(0,0,0,0.07);
+            --shadow-elevated:  0 4px 16px rgba(0,0,0,0.09);
+            --shadow-floating:  0 8px 24px rgba(0,0,0,0.11);
+            --shadow-modal:     0 16px 48px rgba(0,0,0,0.15);
+            color-scheme: light;
+        }
+        [data-theme="light"] ::-webkit-scrollbar-thumb { background: #c0c0c5; }
+        [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a0a0a8; }
+        [data-theme="light"] input,
+        [data-theme="light"] select,
+        [data-theme="light"] textarea {
+            color-scheme: light !important;
+        }
+
+        /* ── Theme: Ocean (Premium) ── */
+        [data-theme="ocean"] {
+            --surface-canvas:   #070d1a;
+            --surface-raised:   #0b1225;
+            --surface-elevated: #101a30;
+            --surface-floating: #15223b;
+            --surface-modal:    #1c2b4a;
+            --text-primary:     #e6ecf4;
+            --text-secondary:   #8899b0;
+            --text-tertiary:    #5c6f8a;
+            --text-disabled:    #3d4f68;
+            --chart-grid-color: rgba(255, 255, 255, 0.03);
+            --chart-tooltip-bg: rgba(16, 26, 48, 0.95);
+            --overlay-white:    rgba(255, 255, 255, 0.04);
+            --overlay-white-hover: rgba(255, 255, 255, 0.08);
+            --border-white:     rgba(255, 255, 255, 0.06);
+            --border-white-hover: rgba(255, 255, 255, 0.1);
+            --border-white-active: rgba(255, 255, 255, 0.04);
+            --shadow-surface:   0 1px 2px rgba(0,0,0,0.5);
+            --shadow-raised:    0 4px 12px rgba(0,0,0,0.55);
+            --shadow-elevated:  0 8px 24px rgba(0,0,0,0.6);
+            --shadow-floating:  0 12px 40px rgba(0,0,0,0.65);
+            --shadow-modal:     0 20px 60px rgba(0,0,0,0.7);
+            color-scheme: dark;
+        }
 
         *:focus-visible {
             outline: 2px solid #34d399;
@@ -3116,6 +3209,406 @@
                 aspect-ratio: 4 / 3;
             }
         }
+
+        /* ── Theme-aware utility overrides ────────────────────
+           These catch ALL bg-white/N, border-white/N, and hover variants
+           that are hardcoded in JS template strings across the codebase.
+           CSS variable values change per [data-theme] so they adapt
+           automatically — no need to touch 200+ JS occurrences.        */
+        [class*="bg-white/"] {
+            background-color: var(--overlay-white) !important;
+        }
+        [class*="bg-white/"][class*="hover"]:hover,
+        [class*="hover:bg-white/"]:hover {
+            background-color: var(--overlay-white-hover) !important;
+        }
+        [class*="border-white/"] {
+            border-color: var(--border-white) !important;
+        }
+        [class*="border-white/"][class*="hover"]:hover,
+        [class*="hover:border-white/"]:hover {
+            border-color: var(--border-white-hover) !important;
+        }
+
+        /* ── Light theme — custom CSS component overrides ──── */
+        [data-theme="light"] {
+            /* ── Note Canvas Editor ── */
+            --canvas-editor-bg: #ffffff;
+            --canvas-topbar-bg: rgba(255, 255, 255, 0.85);
+            --canvas-topbar-border: rgba(0, 0, 0, 0.05);
+            --canvas-meta-bar-border: rgba(0, 0, 0, 0.04);
+            --canvas-title-placeholder: #d4d4d8;
+            --canvas-content-placeholder: #d4d4d8;
+            --canvas-footer-border: rgba(0, 0, 0, 0.04);
+            --canvas-footer-stats: #a1a1aa;
+            --canvas-footer-date: #d4d4d8;
+            --canvas-cat-select-bg: rgba(0, 0, 0, 0.02);
+            --canvas-cat-select-border: rgba(0, 0, 0, 0.06);
+            --canvas-tag-input-placeholder: #a1a1aa;
+            --canvas-option-bg: #ffffff;
+            --canvas-option-color: #18181b;
+
+            /* ── Masonry Grid ── */
+            --masonry-card-body-border: rgba(0, 0, 0, 0.05);
+            --masonry-card-fade-bg: rgba(255, 255, 255, 0.95);
+            --masonry-card-tag-bg: rgba(0, 0, 0, 0.03);
+            --masonry-card-footer-border: rgba(0, 0, 0, 0.04);
+            --masonry-toolbar-bg: rgba(255, 255, 255, 0.7);
+            --masonry-toolbar-border: rgba(0, 0, 0, 0.05);
+            --masonry-search-bg: rgba(0, 0, 0, 0.03);
+            --masonry-search-border: rgba(0, 0, 0, 0.06);
+            --masonry-search-focus-bg: rgba(0, 0, 0, 0.05);
+            --masonry-cat-chip-hover-bg: rgba(0, 0, 0, 0.03);
+            --masonry-card-action-btn-bg: rgba(255, 255, 255, 0.85);
+            --masonry-card-action-btn-border: rgba(0, 0, 0, 0.06);
+            --masonry-card-action-btn-hover-bg: #f0f0f2;
+            --masonry-card-action-btn-hover-border: rgba(0, 0, 0, 0.1);
+            --masonry-scrollbar-thumb: rgba(0, 0, 0, 0.08);
+
+            /* ── Command Palette ── */
+            --cmd-palette-bg: rgba(255, 255, 255, 0.92);
+            --cmd-palette-border: rgba(0, 0, 0, 0.08);
+            --cmd-palette-shadow: 0 24px 80px rgba(0,0,0,0.2);
+            --cmd-palette-search-border: rgba(0, 0, 0, 0.05);
+            --cmd-palette-item-hover-bg: rgba(0, 0, 0, 0.04);
+            --cmd-palette-item-selected-bg: rgba(0, 0, 0, 0.06);
+            --cmd-palette-item-icon-bg: rgba(0, 0, 0, 0.03);
+            --cmd-palette-separator-bg: rgba(0, 0, 0, 0.04);
+            --cmd-palette-footer-border: rgba(0, 0, 0, 0.04);
+            --cmd-palette-kbd-bg: rgba(0, 0, 0, 0.04);
+            --cmd-palette-kbd-border: rgba(0, 0, 0, 0.06);
+            --cmd-palette-scrollbar-thumb: rgba(0, 0, 0, 0.08);
+
+            /* ── Kanban ── */
+            --kanban-column-bg: rgba(255, 255, 255, 0.55);
+            --kanban-column-border: rgba(0, 0, 0, 0.05);
+            --kanban-card-bg: rgba(255, 255, 255, 0.8);
+            --kanban-card-border: rgba(0, 0, 0, 0.06);
+            --kanban-empty-border: rgba(0, 0, 0, 0.08);
+            --kanban-move-menu-bg: rgba(255, 255, 255, 0.95);
+            --kanban-move-menu-border: rgba(0, 0, 0, 0.08);
+            --kanban-scrollbar-thumb: rgba(0, 0, 0, 0.08);
+
+            /* ── Habits ── */
+            --habit-card-bg: rgba(255, 255, 255, 0.65);
+            --habit-card-border: rgba(0, 0, 0, 0.05);
+            --habit-cell-missed-bg: rgba(0, 0, 0, 0.03);
+            --habit-cell-future-border: rgba(0, 0, 0, 0.08);
+
+            /* ── Vision Board ── */
+            --vision-card-bg: rgba(255, 255, 255, 0.6);
+            --vision-card-border: rgba(0, 0, 0, 0.05);
+            --vision-card-footer-border: rgba(0, 0, 0, 0.04);
+            --vision-pill-bg: rgba(0, 0, 0, 0.03);
+            --vision-pill-border: rgba(0, 0, 0, 0.06);
+            --vision-pill-hover-bg: rgba(0, 0, 0, 0.06);
+            --vision-pill-more-border: rgba(0, 0, 0, 0.1);
+            --vision-add-input-border: rgba(0, 0, 0, 0.08);
+
+            /* ── Analytics ── */
+            --analytics-card-bg: rgba(255, 255, 255, 0.6);
+            --analytics-card-border: rgba(0, 0, 0, 0.05);
+
+            /* ── Quick Capture ── */
+            --qc-type-btn-active-bg: rgba(0, 0, 0, 0.05);
+            --qc-type-btn-active-border: rgba(0, 0, 0, 0.08);
+            --qc-pill-bg: rgba(0, 0, 0, 0.02);
+            --qc-pill-border: rgba(0, 0, 0, 0.05);
+            --qc-pill-hover-bg: rgba(0, 0, 0, 0.04);
+            --qc-pill-hover-border: rgba(0, 0, 0, 0.08);
+            --qc-divider-bg: rgba(0, 0, 0, 0.06);
+
+            /* ── Transactions ── */
+            --tx-feed-row-hover-bg: rgba(0, 0, 0, 0.02);
+            --tx-card-bg: linear-gradient(135deg, rgba(96,165,250,0.06) 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.6) 100%);
+
+            /* ── Glass ── */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+
+            /* ── Dashboard Cards (dash-card) ── */
+            --dash-card-hover-border: rgba(0, 0, 0, 0.07);
+            --dash-card-hover-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            --dash-card-active-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+            /* ── Task inline edit ── */
+            --task-inline-edit-color: #18181b;
+
+            /* ── Paywall overlay ── */
+            --paywall-overlay-bg: rgba(255, 255, 255, 0.6);
+            --paywall-modal-bg: #ffffff;
+            --paywall-modal-border: rgba(0, 0, 0, 0.06);
+
+            /* ── Auth blur ── */
+            --auth-overlay-bg: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ── Apply custom CSS component overrides ── */
+
+        /* Note Canvas Editor */
+        [data-theme="light"] .canvas-editor { background: var(--canvas-editor-bg); }
+        [data-theme="light"] .canvas-topbar {
+            background: var(--canvas-topbar-bg);
+            border-bottom-color: var(--canvas-topbar-border);
+        }
+        [data-theme="light"] .canvas-topbar-btn:hover {
+            color: var(--text-primary);
+            background: var(--overlay-white-hover);
+        }
+        [data-theme="light"] .canvas-title { color: var(--text-primary); }
+        [data-theme="light"] .canvas-title:empty::before,
+        [data-theme="light"] .canvas-title.is-empty::before { color: var(--canvas-title-placeholder); }
+        [data-theme="light"] .canvas-content { color: var(--text-secondary); }
+        [data-theme="light"] .canvas-content:empty::before,
+        [data-theme="light"] .canvas-content.is-empty::before { color: var(--canvas-content-placeholder); }
+        [data-theme="light"] .canvas-footer { border-top-color: var(--canvas-footer-border); }
+        [data-theme="light"] .canvas-footer-stats { color: var(--canvas-footer-stats); }
+        [data-theme="light"] .canvas-footer-date { color: var(--canvas-footer-date); }
+        [data-theme="light"] .canvas-cat-select {
+            color: var(--text-tertiary);
+            background-color: var(--canvas-cat-select-bg);
+            border-color: var(--canvas-cat-select-border);
+        }
+        [data-theme="light"] .canvas-cat-select option {
+            background: var(--canvas-option-bg);
+            color: var(--canvas-option-color);
+        }
+        [data-theme="light"] .canvas-tag-chip { color: var(--text-tertiary); }
+        [data-theme="light"] .canvas-tag-input::placeholder { color: var(--canvas-tag-input-placeholder); }
+        [data-theme="light"] .canvas-meta-bar { border-bottom-color: var(--canvas-meta-bar-border); }
+
+        /* Masonry Grid */
+        [data-theme="light"] .masonry-card-body { border-color: var(--masonry-card-body-border); }
+        [data-theme="light"] .masonry-card-title { color: var(--text-primary); }
+        [data-theme="light"] .masonry-card-content { color: var(--text-secondary); }
+        [data-theme="light"] .masonry-card-fade {
+            background: linear-gradient(to bottom, transparent 0%, var(--masonry-card-fade-bg) 50%, var(--masonry-card-fade-bg) 100%);
+        }
+        [data-theme="light"] .masonry-card-tag { background: var(--masonry-card-tag-bg); color: var(--text-tertiary); }
+        [data-theme="light"] .masonry-card-footer { border-top-color: var(--masonry-card-footer-border); }
+        [data-theme="light"] .masonry-card-action-btn {
+            background: var(--masonry-card-action-btn-bg);
+            border-color: var(--masonry-card-action-btn-border);
+            color: var(--text-tertiary);
+        }
+        [data-theme="light"] .masonry-card-action-btn:hover {
+            color: var(--text-primary);
+            background: var(--masonry-card-action-btn-hover-bg);
+            border-color: var(--masonry-card-action-btn-hover-border);
+        }
+        [data-theme="light"] .masonry-grid::-webkit-scrollbar-thumb { background: var(--masonry-scrollbar-thumb); }
+        [data-theme="light"] .pkm-masonry-toolbar {
+            background: var(--masonry-toolbar-bg);
+            border-bottom-color: var(--masonry-toolbar-border);
+        }
+        [data-theme="light"] .pkm-masonry-search {
+            color: var(--text-primary);
+            background: var(--masonry-search-bg);
+            border-color: var(--masonry-search-border);
+        }
+        [data-theme="light"] .pkm-masonry-search:focus {
+            border-color: rgba(192,132,252,0.3);
+            background: var(--masonry-search-focus-bg);
+        }
+        [data-theme="light"] .pkm-masonry-search::placeholder { color: var(--text-disabled); }
+        [data-theme="light"] .pkm-masonry-cat-chip:hover {
+            color: var(--text-secondary);
+            background: var(--masonry-cat-chip-hover-bg);
+        }
+        [data-theme="light"] .pkm-masonry-new-btn {
+            background: rgba(192,132,252,0.08);
+            border-color: rgba(192,132,252,0.12);
+        }
+
+        /* Command Palette */
+        [data-theme="light"] .cmd-palette-panel {
+            background: var(--cmd-palette-bg);
+            border-color: var(--cmd-palette-border);
+            box-shadow: var(--cmd-palette-shadow);
+        }
+        [data-theme="light"] .cmd-palette-search-row { border-bottom-color: var(--cmd-palette-search-border); }
+        [data-theme="light"] .cmd-palette-separator { background: var(--cmd-palette-separator-bg); }
+        [data-theme="light"] .cmd-palette-item:hover,
+        [data-theme="light"] .cmd-palette-item.is-selected { background: var(--cmd-palette-item-hover-bg); }
+        [data-theme="light"] .cmd-palette-item.is-selected { background: var(--cmd-palette-item-selected-bg); }
+        [data-theme="light"] .cmd-palette-item-icon { background: var(--cmd-palette-item-icon-bg); }
+        [data-theme="light"] .cmd-palette-footer { border-top-color: var(--cmd-palette-footer-border); }
+        [data-theme="light"] .cmd-palette-kbd {
+            color: var(--text-tertiary);
+            background: var(--cmd-palette-kbd-bg);
+            border-color: var(--cmd-palette-kbd-border);
+        }
+        [data-theme="light"] .cmd-palette-results::-webkit-scrollbar-thumb { background: var(--cmd-palette-scrollbar-thumb); }
+        [data-theme="light"] .cmd-palette-input { color: var(--text-primary); caret-color: #34d399; }
+        [data-theme="light"] .cmd-palette-input::placeholder { color: var(--text-disabled); }
+        [data-theme="light"] .cmd-palette-item-label { color: var(--text-primary); }
+        [data-theme="light"] .cmd-palette-item-category { color: var(--text-disabled); }
+        [data-theme="light"] .cmd-palette-item-arrow { color: var(--text-tertiary); }
+        [data-theme="light"] .cmd-palette-section-header { color: var(--text-disabled); }
+        [data-theme="light"] .cmd-palette-empty { color: var(--text-disabled); }
+        [data-theme="light"] .cmd-palette-search-icon { color: var(--text-tertiary); }
+        [data-theme="light"] .cmd-palette-overlay.is-active .cmd-palette-search-icon { color: var(--text-secondary); }
+
+        /* Kanban */
+        [data-theme="light"] .kanban-column {
+            background: var(--kanban-column-bg);
+            border-color: var(--kanban-column-border);
+        }
+        [data-theme="light"] .kanban-card {
+            background: var(--kanban-card-bg);
+            border-color: var(--kanban-card-border);
+        }
+        [data-theme="light"] .kanban-card:hover { border-color: rgba(0,0,0,0.08); }
+        [data-theme="light"] .kanban-card--ghost { border-color: rgba(96,165,250,0.2); }
+        [data-theme="light"] .kanban-card-title { color: var(--text-primary); }
+        [data-theme="light"] .kanban-column-label { color: var(--text-secondary); }
+        [data-theme="light"] .kanban-card-move-btn { color: var(--text-disabled); }
+        [data-theme="light"] .kanban-card-move-btn:hover { color: var(--text-secondary); background: var(--overlay-white-hover); }
+        [data-theme="light"] .kanban-empty { border-color: var(--kanban-empty-border); }
+        [data-theme="light"] .kanban-empty-text { color: var(--text-disabled); }
+        [data-theme="light"] .kanban-move-menu {
+            background: var(--kanban-move-menu-bg);
+            border-color: var(--kanban-move-menu-border);
+        }
+        [data-theme="light"] .kanban-move-option { color: var(--text-secondary); }
+        [data-theme="light"] .kanban-move-option:hover { color: var(--text-primary); background: var(--overlay-white-hover); }
+        [data-theme="light"] .kanban-move-option:active { background: var(--overlay-white); }
+        [data-theme="light"] .kanban-card-list::-webkit-scrollbar-thumb { background: var(--kanban-scrollbar-thumb); }
+        [data-theme="light"] .kanban-card-time { color: var(--text-disabled); }
+        [data-theme="light"] .kanban-card-due { color: var(--text-tertiary); }
+        [data-theme="light"] .kanban-column-count { background: var(--overlay-white); color: var(--text-tertiary); }
+
+        /* Habits */
+        [data-theme="light"] .habit-card {
+            background: var(--habit-card-bg);
+            border-color: var(--habit-card-border);
+        }
+        [data-theme="light"] .habit-card-name { color: var(--text-primary); }
+        [data-theme="light"] .habit-card:hover { border-color: rgba(0,0,0,0.07); }
+        [data-theme="light"] .habit-cell--missed { background: var(--habit-cell-missed-bg); }
+        [data-theme="light"] .habit-cell--future { border-color: var(--habit-cell-future-border); }
+        [data-theme="light"] .habit-card-date-range { color: var(--text-disabled); }
+        [data-theme="light"] .habit-card-streak-empty { color: var(--text-disabled); }
+        [data-theme="light"] .habit-card-action-btn { color: var(--text-disabled); }
+        [data-theme="light"] .habit-card-action-btn:hover { color: var(--text-secondary); background: var(--overlay-white-hover); }
+        [data-theme="light"] .habit-card-action-danger:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+
+        /* Vision Board */
+        [data-theme="light"] .vision-card {
+            background: var(--vision-card-bg);
+            border-color: var(--vision-card-border);
+        }
+        [data-theme="light"] .vision-card:hover { border-color: rgba(0,0,0,0.07); }
+        [data-theme="light"] .vision-card-title { color: var(--text-primary); }
+        [data-theme="light"] .vision-card-desc { color: var(--text-tertiary); }
+        [data-theme="light"] .vision-card-footer { border-top-color: var(--vision-card-footer-border); }
+        [data-theme="light"] .vision-card-pct { color: var(--text-primary); }
+        [data-theme="light"] .vision-card-msummary { color: var(--text-disabled); }
+        [data-theme="light"] .vision-card-deadline { color: var(--text-disabled); }
+        [data-theme="light"] .vision-card-action { color: var(--text-disabled); }
+        [data-theme="light"] .vision-card-action:hover { color: var(--text-secondary); background: var(--overlay-white-hover); }
+        [data-theme="light"] .vision-empty-title { color: var(--text-secondary); }
+        [data-theme="light"] .vision-empty-title--hero { color: var(--text-primary); }
+        [data-theme="light"] .vision-empty-hint { color: var(--text-disabled); }
+        [data-theme="light"] .vision-empty-hint--hero { color: var(--text-tertiary); }
+        [data-theme="light"] .vision-card-pill {
+            background: var(--vision-pill-bg);
+            border-color: var(--vision-pill-border);
+        }
+        [data-theme="light"] .vision-card-pill:hover {
+            background: var(--vision-pill-hover-bg);
+            border-color: var(--vision-pill-border);
+        }
+        [data-theme="light"] .vision-card-pill--more { border-color: var(--vision-pill-more-border); }
+        [data-theme="light"] .vision-card-add-input {
+            color: var(--text-tertiary);
+            border-color: var(--vision-add-input-border);
+        }
+        [data-theme="light"] .vision-card-add-input::placeholder { color: var(--text-disabled); }
+        [data-theme="light"] .vision-card-pill-label { color: var(--text-secondary); }
+        [data-theme="light"] .vision-card-pill-del { color: var(--text-disabled); }
+
+        /* Analytics */
+        [data-theme="light"] .analytics-chart-card {
+            background: var(--analytics-card-bg);
+            border-color: var(--analytics-card-border);
+        }
+        [data-theme="light"] .analytics-chart-card-label { color: var(--text-primary); }
+        [data-theme="light"] .analytics-paywall-overlay { background: var(--paywall-overlay-bg); }
+        [data-theme="light"] .analytics-paywall-card {
+            background: var(--paywall-modal-bg);
+            border-color: var(--paywall-modal-border);
+        }
+        [data-theme="light"] .analytics-paywall-title { color: var(--text-primary); }
+        [data-theme="light"] .analytics-paywall-desc { color: var(--text-tertiary); }
+        [data-theme="light"] .analytics-paywall-modal { background: var(--auth-overlay-bg); }
+
+        /* Quick Capture */
+        [data-theme="light"] .qc-type-btn.is-active {
+            color: var(--text-primary);
+            background: var(--qc-type-btn-active-bg);
+            border-color: var(--qc-type-btn-active-border);
+        }
+        [data-theme="light"] .qc-pill {
+            background: var(--qc-pill-bg);
+            border-color: var(--qc-pill-border);
+        }
+        [data-theme="light"] .qc-pill:hover {
+            background: var(--qc-pill-hover-bg);
+            border-color: var(--qc-pill-hover-border);
+        }
+        [data-theme="light"] .qc-pill-label { color: var(--text-tertiary); }
+        [data-theme="light"] .qc-pill:hover .qc-pill-label { color: var(--text-secondary); }
+        [data-theme="light"] .qc-divider { background: var(--qc-divider-bg); }
+        [data-theme="light"] .qc-amount-input { color: var(--text-primary); caret-color: #60a5fa; }
+        [data-theme="light"] .qc-currency-symbol { color: var(--text-disabled); }
+        [data-theme="light"] .qc-type-btn { color: var(--text-tertiary); }
+        [data-theme="light"] .qc-type-btn:hover { color: var(--text-secondary); background: var(--overlay-white); }
+        [data-theme="light"] .qc-preview { color: var(--text-disabled); }
+
+        /* Transactions */
+        [data-theme="light"] .tx-hero-card { background: var(--tx-card-bg); border-color: rgba(96,165,250,0.08); }
+        [data-theme="light"] .tx-hero-amount { color: var(--text-primary); }
+        [data-theme="light"] .tx-hero-label { color: #60a5fa; }
+        [data-theme="light"] .tx-hero-stat-label { color: var(--text-tertiary); }
+        [data-theme="light"] .tx-feed-category { color: var(--text-primary); }
+        [data-theme="light"] .tx-feed-time { color: var(--text-disabled); }
+        [data-theme="light"] .tx-feed-row:hover { background: var(--tx-feed-row-hover-bg); }
+        [data-theme="light"] .tx-feed-action-btn { color: var(--text-disabled); }
+        [data-theme="light"] .tx-feed-date-header { color: var(--text-disabled); }
+        [data-theme="light"] .tx-feed-empty-title { color: var(--text-tertiary); }
+        [data-theme="light"] .tx-feed-empty-hint { color: var(--text-disabled); }
+        [data-theme="light"] .tx-feed-empty-icon { color: var(--text-disabled); }
+
+        /* Glass */
+        [data-theme="light"] .glass { background: var(--glass-bg); }
+
+        /* Dashboard cards (dash-card) */
+        [data-theme="light"] .dash-card:hover {
+            box-shadow: var(--dash-card-hover-shadow);
+            border-color: var(--dash-card-hover-border);
+        }
+        [data-theme="light"] .dash-card:active {
+            box-shadow: var(--dash-card-active-shadow);
+        }
+
+        /* Task inline edit */
+        [data-theme="light"] .task-inline-edit { color: var(--task-inline-edit-color); }
+
+        /* Task checkbox */
+        [data-theme="light"] .task-checkbox { border-color: rgba(0,0,0,0.15); }
+        [data-theme="light"] .task-row.is-done .task-title {
+            text-decoration-color: rgba(0,0,0,0.2);
+        }
+
+        /* Paywall upgrades */
+        [data-theme="light"] .paywall-card,
+        [data-theme="light"] .paywall-modal {
+            background: var(--paywall-modal-bg);
+            border-color: var(--paywall-modal-border);
+        }
+
+        /* Progress / range inputs */
+        [data-theme="light"] input[type="range"] { accent-color: #34d399; }
 
         /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {

@@ -39,6 +39,8 @@
 
 'use strict';
 
+import { canCreateEntity, showPaywall } from '../../core/freemium.js';
+
 /* ── Helpers ──────────────────────────────────────────────── */
 
 /**
@@ -301,7 +303,6 @@ export class HabitStore {
             return null;
         }
 
-        var { canCreateEntity, showPaywall } = await import('../../core/freemium.js');
         if (!canCreateEntity('habits', this.habits.length)) {
             showPaywall();
             this.eventBus.publish('habits:freemium-blocked', { entityType: 'habits', limit: 5 });

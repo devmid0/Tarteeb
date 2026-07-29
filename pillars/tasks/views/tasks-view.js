@@ -207,10 +207,10 @@ export class TasksView {
                 '<div class="flex items-center gap-1.5 text-[11px] text-text-tertiary">' +
                     '<svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 opacity-50"><path d="M8 3.5a.5.5 0 01.5.5v4.25l3.15 1.89a.5.5 0 01-.5.87L7.76 8.87a.5.5 0 01-.26-.44v-4.7a.5.5 0 01.5-.5z"/><path fill-rule="evenodd" d="M8 16A8 8 0 108 0a8 8 0 000 16zm0-1A7 7 0 118 1a7 7 0 010 14z" clip-rule="evenodd"/></svg>' +
                     '<span>Est: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.totalEstimate) + '</strong></span>' +
-                    '<span class="text-white/[0.08]">\u00b7</span>' +
+                    '<span class="text-text-tertiary/[0.2]">\u00b7</span>' +
                     '<span>Done: <strong class="text-accent-tasks font-medium">' + formatMinutes(timeStats.totalSpent) + '</strong></span>' +
                     (timeStats.remaining > 0
-                        ? '<span class="text-white/[0.08]">\u00b7</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
+                        ? '<span class="text-text-tertiary/[0.2]">\u00b7</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
                         : '') +
                 '</div>';
             slot.appendChild(timeBar);
@@ -266,10 +266,10 @@ export class TasksView {
                 '<div class="flex items-center gap-1.5 text-[11px] text-text-tertiary">' +
                     '<svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 opacity-50"><path d="M8 3.5a.5.5 0 01.5.5v4.25l3.15 1.89a.5.5 0 01-.5.87L7.76 8.87a.5.5 0 01-.26-.44v-4.7a.5.5 0 01.5-.5z"/><path fill-rule="evenodd" d="M8 16A8 8 0 108 0a8 8 0 000 16zm0-1A7 7 0 118 1a7 7 0 010 14z" clip-rule="evenodd"/></svg>' +
                     '<span>Est: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.totalEstimate) + '</strong></span>' +
-                    '<span class="text-white/[0.08]">\u00b7</span>' +
+                    '<span class="text-text-tertiary/[0.2]">\u00b7</span>' +
                     '<span>Done: <strong class="text-accent-tasks font-medium">' + formatMinutes(timeStats.totalSpent) + '</strong></span>' +
                     (timeStats.remaining > 0
-                        ? '<span class="text-white/[0.08]">\u00b7</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
+                        ? '<span class="text-text-tertiary/[0.2]">\u00b7</span><span>Left: <strong class="text-text-secondary font-medium">' + formatMinutes(timeStats.remaining) + '</strong></span>'
                         : '') +
                 '</div>';
             slot.appendChild(timeBar);

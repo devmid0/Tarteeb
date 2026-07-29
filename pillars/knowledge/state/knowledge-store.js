@@ -46,6 +46,8 @@ import {
     summarizeTags,
 } from '../domain/knowledge-rules.js';
 
+import { canCreateEntity, showPaywall } from '../../core/freemium.js';
+
 /* ── Helpers ──────────────────────────────────────────────── */
 
 /**
@@ -178,6 +180,12 @@ export class KnowledgeStore {
         }
         if (data.content && typeof data.content === 'string' && data.content.length > 10000) {
             this.eventBus.publish('knowledge:validation-error', ['Content must be 10 000 characters or fewer']);
+            return null;
+        }
+
+        if (!canCreateEntity('knowledge', this.notes.length)) {
+            showPaywall();
+            this.eventBus.publish('knowledge:freemium-blocked', { entityType: 'knowledge', limit: 5 });
             return null;
         }
 

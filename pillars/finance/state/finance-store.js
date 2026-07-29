@@ -40,6 +40,8 @@ import {
     TX_TYPE,
 } from '../domain/finance-rules.js';
 
+import { canCreateEntity, showPaywall } from '../../core/freemium.js';
+
 export class FinanceStore {
     constructor(eventBus, financeGateway) {
         this.eventBus    = eventBus;
@@ -93,6 +95,12 @@ export class FinanceStore {
         var validation = validateTransaction(data);
         if (!validation.valid) {
             this.eventBus.publish('finance:validation-error', validation.errors);
+            return null;
+        }
+
+        if (!canCreateEntity('finance', this.transactions.length)) {
+            showPaywall();
+            this.eventBus.publish('finance:freemium-blocked', { entityType: 'finance', limit: 10 });
             return null;
         }
 

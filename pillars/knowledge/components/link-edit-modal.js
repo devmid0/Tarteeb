@@ -135,7 +135,7 @@ export function openLinkEditModal(link, onSave, onDelete) {
             (function (idx) {
                 var tagEl = document.createElement('span');
                 tagEl.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent-finance/10 text-accent-finance text-[11px] font-medium';
-                tagEl.innerHTML = currentTags[idx] + '<button type="button" class="ml-0.5 hover:text-white transition-colors">&times;</button>';
+                tagEl.innerHTML = currentTags[idx] + '<button type="button" class="ml-0.5 hover:text-text-primary transition-colors">&times;</button>';
                 tagEl.querySelector('button').addEventListener('click', function (e) {
                     e.stopPropagation();
                     currentTags.splice(idx, 1);

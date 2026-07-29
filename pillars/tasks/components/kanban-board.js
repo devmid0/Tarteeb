@@ -17,7 +17,7 @@
 import { PRIORITY_ORDER, formatMinutes } from '../domain/task-rules.js';
 
 var COLUMNS = [
-    { id: 'pending',     label: 'To Do',        icon: '📋', color: '#71717a' },
+    { id: 'pending',     label: 'To Do',        icon: '📋', color: 'var(--text-tertiary)' },
     { id: 'in_progress', label: 'In Progress',  icon: '⚡', color: '#60a5fa' },
     { id: 'completed',   label: 'Done',          icon: '✅', color: '#22c55e' },
 ];
@@ -266,7 +266,7 @@ function _showMoveMenu(card, taskId, onDrop) {
     menu.className = 'kanban-move-menu';
     menu.innerHTML =
         '<button type="button" class="kanban-move-option" data-status="pending">' +
-            '<span class="kanban-move-dot" style="background:#71717a"></span>To Do' +
+            '<span class="kanban-move-dot" style="background:var(--text-tertiary)"></span>To Do' +
         '</button>' +
         '<button type="button" class="kanban-move-option" data-status="in_progress">' +
             '<span class="kanban-move-dot" style="background:#60a5fa"></span>In Progress' +

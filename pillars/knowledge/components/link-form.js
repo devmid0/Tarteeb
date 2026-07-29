@@ -83,7 +83,7 @@ export function createLinkForm(opts) {
                 ].join(' ');
                 tagEl.innerHTML =
                     currentTags[idx] +
-                    '<button type="button" class="ml-0.5 hover:text-white transition-colors" aria-label="Remove tag">&times;</button>';
+                    '<button type="button" class="ml-0.5 hover:text-text-primary transition-colors" aria-label="Remove tag">&times;</button>';
                 tagEl.querySelector('button').addEventListener('click', function (e) {
                     e.stopPropagation();
                     currentTags.splice(idx, 1);

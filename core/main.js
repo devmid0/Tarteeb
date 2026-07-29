@@ -55,6 +55,14 @@ class Application {
             }
         }
 
+        /* ── Theme initialization ──────────────────────────── */
+        var savedTheme = localStorage.getItem('tarteeb_theme') || 'default';
+        if (savedTheme === 'ocean' && localStorage.getItem('tarteeb_premium') !== 'true') {
+            savedTheme = 'default';
+        }
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.documentElement.classList.toggle('dark', savedTheme !== 'light');
+
         try {
             this.database = new Database();
             await this.database.connect();

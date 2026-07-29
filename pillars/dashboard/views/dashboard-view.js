@@ -44,6 +44,7 @@ import { KnowledgeGateway } from '../../../persistence/gateways/knowledge-gatewa
 import { FinanceGateway } from '../../../persistence/gateways/finance-gateway.js';
 
 import { OptimisticDispatcher } from '../../../core/events/optimistic-dispatcher.js';
+import { canCreateEntity, showPaywall } from '../../core/freemium.js';
 
 /* ── Constants ───────────────────────────────────────────── */
 
@@ -467,10 +468,34 @@ export class DashboardView {
         }
     }
 
+    _countForType(entityType) {
+        var MAP = { finance:'finance-transactions', tasks:'tasks-items', knowledge:'knowledge-notes', habits:'habits-definitions', goals:'goals-items' };
+        var storeName = MAP[entityType];
+        if (!storeName) return Promise.resolve(0);
+        return new Promise(function (resolve) {
+            var req = indexedDB.open('tarteeb', 1);
+            req.onsuccess = function () {
+                var db = req.result;
+                var tx = db.transaction(storeName, 'readonly');
+                var store = tx.objectStore(storeName);
+                var countReq = store.count();
+                countReq.onsuccess = function () { resolve(countReq.result); db.close(); };
+                countReq.onerror   = function () { resolve(0); db.close(); };
+            };
+            req.onerror = function () { resolve(0); };
+        });
+    }
+
     async _handleQuickCapture(typeIndex, overlay) {
         var type = QUICK_CAPTURE_TYPES[typeIndex];
         var db   = this._db;
         var bus  = this._bus;
+
+        var ENTITY_MAP = { task: 'tasks', note: 'knowledge', expense: 'finance' };
+        if (!canCreateEntity(ENTITY_MAP[type.id], await this._countForType(ENTITY_MAP[type.id]))) {
+            showPaywall();
+            return;
+        }
 
         if (type.id === 'task') {
             var nameInput = overlay.querySelector('#dash-qc-task-name');

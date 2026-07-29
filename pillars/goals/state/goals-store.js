@@ -38,6 +38,8 @@ import {
     computeProgress, sortByDeadline, sortMilestones,
 } from '../domain/goal-rules.js';
 
+import { canCreateEntity, showPaywall } from '../../core/freemium.js';
+
 /* ── Store ────────────────────────────────────────────────── */
 
 export class GoalsStore {
@@ -146,6 +148,12 @@ export class GoalsStore {
         var errors = validateGoal(data);
         if (errors.length > 0) {
             this.eventBus.publish('goals:validation-error', errors);
+            return null;
+        }
+
+        if (!canCreateEntity('goals', this.goals.length)) {
+            showPaywall();
+            this.eventBus.publish('goals:freemium-blocked', { entityType: 'goals', limit: 3 });
             return null;
         }
 

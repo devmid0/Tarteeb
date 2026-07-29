@@ -66,7 +66,7 @@ export const CATEGORY_META = Object.freeze({
     utilities:     { label: 'Utilities',       icon: '⚡', color: '#eab308' },
     subscriptions: { label: 'Subscriptions',   icon: '🔄', color: '#8b5cf6' },
     personal:      { label: 'Personal',        icon: '👤', color: '#06b6d4' },
-    other:         { label: 'Other',           icon: '📌', color: '#71717a' },
+    other:         { label: 'Other',           icon: '📌', color: 'var(--text-tertiary)' },
     salary:        { label: 'Salary',          icon: '💰', color: '#22c55e' },
     freelance:     { label: 'Freelance',       icon: '💻', color: '#10b981' },
     investment:    { label: 'Investment',      icon: '📈', color: '#60a5fa' },

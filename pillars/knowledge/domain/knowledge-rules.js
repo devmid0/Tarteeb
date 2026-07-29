@@ -34,7 +34,7 @@ export const CATEGORY_META = Object.freeze({
     health:      { label: 'Health',      icon: '💪', color: '#4ade80' },
     learning:    { label: 'Learning',    icon: '📚', color: '#c084fc' },
     personal:    { label: 'Personal',    icon: '👤', color: '#2dd4bf' },
-    other:       { label: 'Other',       icon: '📌', color: '#a1a1aa' },
+    other:       { label: 'Other',       icon: '📌', color: 'var(--text-secondary)' },
 });
 
 /* ── Validation ──────────────────────────────────────────── */
