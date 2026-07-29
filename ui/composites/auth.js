@@ -65,10 +65,18 @@ export async function checkUserSession() {
     }
 }
 
-export async function handleSignUp(email, password) {
+export async function handleSignUp(email, password, fullName) {
     try {
         if (!_supabase) throw new Error('Supabase client not initialized');
-        const { data, error } = await _supabase.auth.signUp({ email, password });
+        const { data, error } = await _supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName || '',
+                },
+            },
+        });
         if (error) {
             console.error('[Auth] Sign up error:', error.message);
             alert(error.message);
@@ -146,6 +154,8 @@ export function showAuthModal() {
             '<p class="text-[13px] text-text-secondary mt-1">Sign in or create an account</p>' +
         '</div>' +
         '<div class="space-y-3 mb-4">' +
+            '<input id="auth-fullname" type="text" placeholder="Full Name (For New Accounts)" autocomplete="name" hidden ' +
+                   'class="w-full px-4 py-2.5 rounded-xl text-[14px] font-body text-text-primary bg-surface-elevated border border-white/[0.06] placeholder:text-text-disabled outline-none focus:border-accent-finance/40 focus:bg-surface-floating transition-all duration-200">' +
             '<input id="auth-email" type="email" placeholder="Email" autocomplete="email" ' +
                    'class="w-full px-4 py-2.5 rounded-xl text-[14px] font-body text-text-primary bg-surface-elevated border border-white/[0.06] placeholder:text-text-disabled outline-none focus:border-accent-finance/40 focus:bg-surface-floating transition-all duration-200">' +
             '<input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" ' +
@@ -153,11 +163,11 @@ export function showAuthModal() {
         '</div>' +
         '<div class="flex flex-col gap-2">' +
             '<button id="auth-login-btn" ' +
-                    'class="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white bg-accent-finance hover:brightness-110 transition-all shadow-[0_0_20px_rgba(96,165,250,0.15)]">' +
+                    'class="auth-mode-btn w-full py-2.5 rounded-xl text-[13px] font-semibold text-white bg-accent-finance hover:brightness-110 transition-all shadow-[0_0_20px_rgba(96,165,250,0.15)]">' +
                 'Login' +
             '</button>' +
             '<button id="auth-signup-btn" ' +
-                    'class="w-full py-2.5 rounded-xl text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/[0.04] transition-colors border border-white/[0.06]">' +
+                    'class="auth-mode-btn w-full py-2.5 rounded-xl text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-white/[0.04] transition-colors border border-white/[0.06]">' +
                 'Sign Up' +
             '</button>' +
         '</div>';
@@ -178,12 +188,27 @@ function closeAuthModal() {
 }
 
 function _bindAuthEvents(card) {
+    const fullnameInput = card.querySelector('#auth-fullname');
     const emailInput = card.querySelector('#auth-email');
     const passwordInput = card.querySelector('#auth-password');
     const loginBtn = card.querySelector('#auth-login-btn');
     const signupBtn = card.querySelector('#auth-signup-btn');
+    const modeBtns = card.querySelectorAll('.auth-mode-btn');
+
+    function setMode(mode) {
+        var isSignup = mode === 'signup';
+        fullnameInput.hidden = !isSignup;
+        modeBtns.forEach(function (btn) {
+            var isActive = (isSignup && btn.id === 'auth-signup-btn') || (!isSignup && btn.id === 'auth-login-btn');
+            btn.className = 'auth-mode-btn w-full py-2.5 rounded-xl text-[13px] font-semibold transition-all ' +
+                (isActive
+                    ? 'text-white bg-accent-finance hover:brightness-110 shadow-[0_0_20px_rgba(96,165,250,0.15)]'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-white/[0.04] border border-white/[0.06] font-medium');
+        });
+    }
 
     loginBtn.addEventListener('click', async function () {
+        setMode('login');
         const email = emailInput.value.trim();
         const password = passwordInput.value;
         if (!email || !password) {
@@ -198,22 +223,37 @@ function _bindAuthEvents(card) {
     });
 
     signupBtn.addEventListener('click', async function () {
+        setMode('signup');
+        fullnameInput.focus();
         const email = emailInput.value.trim();
         const password = passwordInput.value;
+        const fullname = fullnameInput.value.trim();
+        if (!fullname) {
+            alert('Please enter your full name');
+            fullnameInput.focus();
+            return;
+        }
         if (!email || !password) {
             alert('Please enter email and password');
             return;
         }
         signupBtn.disabled = true;
         signupBtn.textContent = 'Signing up…';
-        await handleSignUp(email, password);
+        await handleSignUp(email, password, fullname);
         signupBtn.disabled = false;
         signupBtn.textContent = 'Sign Up';
     });
 
     function submitOnEnter(e) {
-        if (e.key === 'Enter') loginBtn.click();
+        if (e.key === 'Enter') {
+            if (!fullnameInput.hidden && fullnameInput === document.activeElement) {
+                signupBtn.click();
+            } else {
+                loginBtn.click();
+            }
+        }
     }
+    fullnameInput.addEventListener('keydown', submitOnEnter);
     emailInput.addEventListener('keydown', submitOnEnter);
     passwordInput.addEventListener('keydown', submitOnEnter);
 }
