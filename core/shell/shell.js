@@ -206,13 +206,13 @@ export class Shell {
         html +=
                 '<button id="export-btn"' +
                         ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
-                               'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200" title="Export Backup (JSON)">' +
+                               'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200" title="Export Data">' +
                     '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
                         '<path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/>' +
                         '<path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/>' +
                     '</svg>' +
                     (showLabel
-                        ? '<span class="text-[13px] font-medium whitespace-nowrap">Export Backup</span>'
+                        ? '<span class="text-[13px] font-medium whitespace-nowrap">Export Data</span>'
                         : '') +
                 '</button>';
 
@@ -354,7 +354,7 @@ export class Shell {
         var exportBtn = document.getElementById('export-btn');
         if (exportBtn) {
             exportBtn.addEventListener('click', function () {
-                self.exportLocalData();
+                self._showExportModal();
             });
         }
 
@@ -569,6 +569,195 @@ export class Shell {
         } catch (err) {
             console.error('[Import] Failed:', err);
             alert('Import failed: ' + err.message + '\n\nThe file may be corrupted or not a valid Tarteeb backup.');
+        }
+    }
+
+    /* ── Export Modal ──────────────────────────────────────── */
+
+    _showExportModal() {
+        var self = this;
+        var portal = document.getElementById('modal-portal');
+        if (!portal) return;
+
+        /* Close existing modal if any */
+        self._closeExportModal();
+
+        var html =
+            '<div class="fixed inset-0 z-50 flex items-center justify-center" id="export-modal-backdrop">' +
+                '<div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>' +
+                '<div class="relative w-full max-w-md mx-4 bg-surface-raised border border-white/[0.06] rounded-2xl shadow-2xl p-6 pointer-events-auto"' +
+                     ' id="export-modal" role="dialog" aria-modal="true" aria-label="Export Data">' +
+                    '<div class="flex items-center justify-between mb-5">' +
+                        '<h2 class="text-[17px] font-heading font-semibold text-text-primary">Export Data</h2>' +
+                        '<button id="export-modal-close" class="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-white/[0.06] transition-all duration-150" aria-label="Close">' +
+                            '<svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>' +
+                        '</button>' +
+                    '</div>' +
+                    '<p class="text-[13px] text-text-secondary mb-5">Choose an export format for your data.</p>' +
+                    '<div class="space-y-3">' +
+                        /* JSON — Free */
+                        '<button id="export-json-btn" class="w-full flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all duration-200 p-4 text-left group">' +
+                            '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-tasks/10 text-accent-tasks">' +
+                                '<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/></svg>' +
+                            '</div>' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<div class="flex items-center gap-2">' +
+                                    '<span class="text-[14px] font-medium text-text-primary">Export Backup (JSON)</span>' +
+                                    '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-accent-tasks/15 text-accent-tasks border border-accent-tasks/20">Free</span>' +
+                                '</div>' +
+                                '<span class="text-[12px] text-text-tertiary block mt-0.5">Complete backup of all app data</span>' +
+                            '</div>' +
+                        '</button>' +
+                        /* CSV — Premium */
+                        '<button id="export-csv-btn" class="w-full flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all duration-200 p-4 text-left group">' +
+                            '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-finance/10 text-accent-finance">' +
+                                '<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>' +
+                            '</div>' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<div class="flex items-center gap-2">' +
+                                    '<span class="text-[14px] font-medium text-text-primary">Export Reports (CSV)</span>' +
+                                    '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-accent-finance/15 text-accent-finance border border-accent-finance/20">\uD83D\uDD12 Premium</span>' +
+                                '</div>' +
+                                '<span class="text-[12px] text-text-tertiary block mt-0.5">Tasks &amp; Finance data as spreadsheets</span>' +
+                            '</div>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        /* Enable pointer events on portal for modal interaction */
+        portal.style.pointerEvents = 'auto';
+        portal.innerHTML = html;
+
+        /* ── Wire events ── */
+
+        /* Close button */
+        var closeBtn = document.getElementById('export-modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                self._closeExportModal();
+            });
+        }
+
+        /* Backdrop click */
+        var backdrop = document.getElementById('export-modal-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === backdrop) {
+                    self._closeExportModal();
+                }
+            });
+        }
+
+        /* JSON export */
+        var jsonBtn = document.getElementById('export-json-btn');
+        if (jsonBtn) {
+            jsonBtn.addEventListener('click', function () {
+                self._closeExportModal();
+                self.exportLocalData();
+            });
+        }
+
+        /* CSV export (premium-gated) */
+        var csvBtn = document.getElementById('export-csv-btn');
+        if (csvBtn) {
+            csvBtn.addEventListener('click', function () {
+                if (localStorage.getItem('tarteeb_premium') === 'true') {
+                    self._closeExportModal();
+                    self._exportCSV();
+                } else {
+                    self._closeExportModal();
+                    import('../composites/cloud-sync.js').then(function (mod) {
+                        mod.showPaywall();
+                    });
+                }
+            });
+        }
+
+        /* Escape key */
+        self._exportModalEscapeHandler = function (e) {
+            if (e.key === 'Escape') {
+                self._closeExportModal();
+            }
+        };
+        document.addEventListener('keydown', self._exportModalEscapeHandler);
+    }
+
+    _closeExportModal() {
+        var portal = document.getElementById('modal-portal');
+        if (portal) {
+            portal.innerHTML = '';
+            portal.style.pointerEvents = 'none';
+        }
+        if (this._exportModalEscapeHandler) {
+            document.removeEventListener('keydown', this._exportModalEscapeHandler);
+            this._exportModalEscapeHandler = null;
+        }
+    }
+
+    /**
+     * Export Tasks and Finance data as CSV files (premium feature).
+     * Downloads two CSV files: tasks and transactions.
+     */
+    async _exportCSV() {
+        try {
+            var db = window.__tarteeb && window.__tarteeb.database;
+            if (!db) {
+                alert('Database not available.');
+                return;
+            }
+
+            var data = await db.exportAll();
+            var tasks = data['tasks-items'] || [];
+            var transactions = data['finance-transactions'] || [];
+            var dateStr = new Date().toISOString().slice(0, 10);
+
+            function csvEscape(val) {
+                if (val === null || val === undefined) return '';
+                var s = String(val);
+                if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+                    return '"' + s.replace(/"/g, '""') + '"';
+                }
+                return s;
+            }
+
+            function arrayToCSV(rows, headers) {
+                var lines = [];
+                lines.push(headers.map(csvEscape).join(','));
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var vals = headers.map(function (h) { return csvEscape(row[h]); });
+                    lines.push(vals.join(','));
+                }
+                return lines.join('\n');
+            }
+
+            var taskHeaders = ['id', 'title', 'description', 'status', 'priority', 'dueDate', 'tags', 'createdAt', 'updatedAt'];
+            var txHeaders  = ['id', 'type', 'amount', 'category', 'description', 'date', 'tags', 'createdAt', 'updatedAt'];
+
+            var taskCSV = arrayToCSV(tasks, taskHeaders);
+            var txCSV   = arrayToCSV(transactions, txHeaders);
+
+            var combinedCSV =
+                '# Tarteeb Tasks Export — ' + dateStr + '\n' +
+                taskCSV + '\n\n' +
+                '# Tarteeb Finance Transactions Export — ' + dateStr + '\n' +
+                txCSV;
+
+            var blob = new Blob([combinedCSV], { type: 'text/csv;charset=utf-8;' });
+            var url  = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            a.href   = url;
+            a.download = 'tarteeb_reports_' + dateStr + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('[Export] CSV saved — ' + (combinedCSV.length / 1024).toFixed(1) + ' KB');
+        } catch (err) {
+            console.error('[Export CSV] Failed:', err);
+            alert('CSV export failed. See console for details.');
         }
     }
 
