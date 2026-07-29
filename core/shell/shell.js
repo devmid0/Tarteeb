@@ -122,28 +122,29 @@ export class Shell {
         const collapsed = this.store.get('sidebar.collapsed');
         const activePillar = this.store.get('activePillar') || 'dashboard';
 
+        const w = mobile ? 256 : (collapsed && !this._expandedByHover ? COLLAPSED_W : EXPANDED_W);
+        const showLabel = mobile ? true : (w > COLLAPSED_W);
+
         if (mobile) {
-            this._renderBottomBar(activePillar);
-            return;
+            this.sidebarEl.className =
+                'fixed inset-y-0 left-0 z-[60] w-64 -translate-x-full ' +
+                'transition-transform duration-300 ease-in-out ' +
+                'flex flex-col bg-surface-raised border-r border-white/[0.04]';
+            this.sidebarEl.style.width = '';
+        } else {
+            this.sidebarEl.className =
+                'flex-shrink-0 h-full z-40 flex flex-col bg-surface-raised border-r border-white/[0.04] ' +
+                'transition-[width] duration-[350ms] ease-[cubic-bezier(0.45,0,0.55,1)]';
+            this.sidebarEl.style.width = w + 'px';
         }
-
-        const w = collapsed && !this._expandedByHover ? COLLAPSED_W : EXPANDED_W;
-        const showLabel = w > COLLAPSED_W;
-
-        this.sidebarEl.className =
-            'flex-shrink-0 h-full z-40 flex flex-col bg-surface-raised border-r border-white/[0.04] ' +
-            'transition-[width] duration-[350ms] ease-[cubic-bezier(0.45,0,0.55,1)]';
-        this.sidebarEl.style.width = w + 'px';
 
         let html = '';
 
         /* ── Brand ── */
         html +=
             '<div class="flex items-center h-14 px-4 flex-shrink-0">' +
-                '<div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ' +
-                            'bg-gradient-to-br from-accent-finance via-accent-knowledge to-accent-goals ' +
-                            'shadow-[0_0_20px_rgba(96,165,250,0.15)]">' +
-                    '<span class="text-white font-heading font-bold text-[13px] select-none">L</span>' +
+                '<div class="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-lg shadow-md">' +
+                    '<span class="select-none">T</span>' +
                 '</div>' +
                 (showLabel
                     ? '<span class="ml-3 text-[15px] font-heading font-semibold text-text-primary tracking-tight whitespace-nowrap">Tarteeb</span>'
@@ -184,6 +185,15 @@ export class Shell {
         }
 
         html += '</nav>';
+
+        /* ── Upgrade CTA ── */
+        html +=
+            '<div class="px-3 mt-4 mb-2">' +
+                '<button id="sidebar-upgrade-btn" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-orange-500/30 text-orange-400 font-bold hover:from-orange-500/20 hover:to-purple-500/20 hover:border-orange-500/50 transition-all duration-300 shadow-[0_0_15px_rgba(234,88,12,0.05)]">' +
+                    '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>' +
+                    'Upgrade to Pro' +
+                '</button>' +
+            '</div>';
 
         /* ── Footer ── */
         html +=
@@ -300,40 +310,6 @@ export class Shell {
         this._bindSidebarEvents();
     }
 
-    _renderBottomBar(activePillar) {
-        this.sidebarEl.className = '';
-        this.sidebarEl.style.width = '';
-        this.mainEl.style.paddingBottom = '';
-
-        var html =
-            '<nav class="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/[0.06] ' +
-                    'flex items-stretch h-14 px-1 safe-area-bottom"' +
-                 ' aria-label="Pillar navigation">';
-
-        for (var i = 0; i < PILLARS.length; i++) {
-            var p = PILLARS[i];
-            var active = activePillar === p.id;
-            var colorClass = p.color ? 'text-' + p.color : 'text-text-tertiary';
-            var activeColor = active ? colorClass : 'text-text-tertiary';
-            var activeIndicator = active
-                ? ' relative before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 ' +
-                  'before:w-5 before:h-0.5 before:rounded-b-full ' +
-                  (p.color ? 'before:bg-' + p.color : 'before:bg-text-tertiary')
-                : '';
-
-            html +=
-                '<a href="#/' + p.id + '"' +
-                   ' class="flex items-center justify-center flex-1 transition-colors duration-200 ' + activeColor + activeIndicator + '"' +
-                   ' aria-current="' + (active ? 'page' : 'false') + '">' +
-                    p.svg +
-                '</a>';
-        }
-
-        html += '</nav>';
-        this.sidebarEl.innerHTML = html;
-        this.mainEl.style.paddingBottom = '56px';
-    }
-
     /* ── Theme ────────────────────────────────────────────── */
 
     _applyTheme(theme) {
@@ -422,6 +398,18 @@ export class Shell {
                     mod.logout();
                 });
             });
+        }
+
+        /* ── Upgrade CTA ── */
+        var upgradeBtn = document.getElementById('sidebar-upgrade-btn');
+        if (upgradeBtn) {
+            upgradeBtn.addEventListener('click', async function () {
+                var mod = await import('../composites/cloud-sync.js');
+                mod.showPaywall('sidebar_upgrade');
+            });
+            /* Hide for Pro users */
+            var isPremium = window.__tarteeb?.user?.isPremium === true;
+            upgradeBtn.closest('div').classList.toggle('hidden', isPremium);
         }
 
         if (!this._isMobile()) {

@@ -139,8 +139,8 @@ export function showAuthModal() {
 
     card.innerHTML =
         '<div class="text-center mb-6">' +
-            '<div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-accent-finance via-accent-knowledge to-accent-goals flex items-center justify-center shadow-[0_0_24px_rgba(96,165,250,0.2)] mb-4">' +
-                '<span class="text-white font-heading font-bold text-xl select-none">T</span>' +
+            '<div class="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-md mx-auto mb-4">' +
+                '<span class="select-none">T</span>' +
             '</div>' +
             '<h1 class="text-xl font-heading font-semibold text-text-primary">Welcome to Tarteeb</h1>' +
             '<p class="text-[13px] text-text-secondary mt-1">Sign in or create an account</p>' +

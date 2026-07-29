@@ -12,7 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="var(--surface-canvas, #0f0f11)">
     <link rel="manifest" href="./manifest.json">
-    <link rel="icon" href="./assets/icons/icon-192.svg" type="image/svg+xml">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23ea580c'/><text x='50%' y='50%' font-family='sans-serif' font-weight='bold' font-size='60' fill='white' dominant-baseline='middle' text-anchor='middle'>T</text></svg>">
     <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
     <title>Tarteeb</title>
 
@@ -354,63 +354,14 @@
 
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
-        /* Quick Capture FAB — avoid mobile bottom bar overlap */
+        /* ── Mobile: account for fixed header ─────────────── */
         @media (max-width: 767px) {
-            #dash-qc-fab { bottom: 72px !important; }
-            #qc-global-fab { bottom: 72px !important; }
-
-            /* Toast container — lift above bottom nav */
-            #toast-container {
-                bottom: 72px !important;
-                right: 16px !important;
+            #app {
+                padding-top: 56px;
             }
-        }
-
-        /* ── Mobile Bottom Nav ────────────────────────────── */
-        @media (max-width: 767px) {
-            /* Hide desktop sidebar width — content takes full width */
-            #sidebar {
-                width: 0 !important;
-                border: none !important;
-                overflow: hidden;
-            }
-
-            /* Hide text labels in bottom nav — icon only */
-            #sidebar nav a > span:last-child {
-                display: none;
-            }
-
-            /* Bottom nav icon sizing — slightly larger touch targets */
-            #sidebar nav a svg {
-                width: 20px;
-                height: 20px;
-            }
-
-            /* Active pill — top indicator bar for bottom nav */
-            #sidebar nav a[aria-current="page"]::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 20px;
-                height: 2px;
-                border-radius: 0 0 2px 2px;
-                background: currentColor;
-            }
-
-            /* Main content — full width, bottom padding for nav clearance */
             #main-content {
                 width: 100% !important;
-                padding-bottom: 56px;
             }
-
-            /* Viewport — safe scroll area above bottom nav */
-            #viewport {
-                padding-bottom: env(safe-area-inset-bottom, 0px);
-            }
-
-            /* Dashboard cards — reduce horizontal padding on small screens */
             .dash-card {
                 padding-left: 16px !important;
                 padding-right: 16px !important;
@@ -3634,13 +3585,31 @@
     <div id="app" class="flex h-screen w-screen overflow-hidden">
 
         <!-- Sidebar (rendered by Shell) -->
-        <aside id="sidebar" class="flex-shrink-0 h-full z-40"></aside>
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-[60] w-64 transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:z-40 flex-shrink-0 h-full"></aside>
 
         <!-- Main content -->
         <main id="main-content" class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
             <div id="viewport" class="flex-1 overflow-y-auto overflow-x-hidden"></div>
         </main>
     </div>
+
+    <!-- ─── Mobile Header ──────────────────────────────── -->
+    <div id="mobile-header" class="md:hidden fixed top-0 left-0 right-0 h-14 z-50 flex items-center justify-between px-4 bg-surface-raised border-b border-white/5">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                <span class="select-none">T</span>
+            </div>
+            <span class="text-[15px] font-heading font-semibold text-text-primary tracking-tight">Tarteeb</span>
+        </div>
+        <button id="mobile-menu-btn" class="w-10 h-10 rounded-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/[0.04] transition-all duration-200" aria-label="Open menu">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ─── Sidebar Overlay ────────────────────────────── -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity duration-300"></div>
 
     <!-- Modal Portal -->
     <div id="modal-portal" class="fixed inset-0 z-50 pointer-events-none"></div>
@@ -3649,5 +3618,60 @@
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
 
     <script type="module" src="./core/main.js"></script>
+
+    <!-- ─── Mobile Sidebar Toggle ───────────────────────── -->
+    <script>
+        (function () {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            var menuBtn = document.getElementById('mobile-menu-btn');
+
+            function openSidebar() {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            if (menuBtn) {
+                menuBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (sidebar.classList.contains('-translate-x-full')) {
+                        openSidebar();
+                    } else {
+                        closeSidebar();
+                    }
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+
+            /* Close sidebar when clicking any nav link inside it */
+            if (sidebar) {
+                sidebar.addEventListener('click', function (e) {
+                    var link = e.target.closest('a[href]');
+                    if (link) {
+                        setTimeout(closeSidebar, 200);
+                    }
+                });
+            }
+
+            /* Close sidebar on Escape key */
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) {
+                    closeSidebar();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
