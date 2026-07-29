@@ -302,7 +302,7 @@ export class QuickCapture {
         var self = this;
 
         var ENTITY_MAP = { task: 'tasks', note: 'knowledge', expense: 'finance' };
-        if (!canCreateEntity(ENTITY_MAP[type.id], await this._countForType(ENTITY_MAP[type.id]))) {
+        if (!await canCreateEntity(ENTITY_MAP[type.id], await this._countForType(ENTITY_MAP[type.id]))) {
             showPaywall();
             return;
         }

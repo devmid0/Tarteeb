@@ -303,7 +303,7 @@ export class HabitStore {
             return null;
         }
 
-        if (!canCreateEntity('habits', this.habits.length)) {
+        if (!await canCreateEntity('habits', this.habits.length)) {
             showPaywall();
             this.eventBus.publish('habits:freemium-blocked', { entityType: 'habits', limit: 5 });
             return null;

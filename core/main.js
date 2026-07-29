@@ -18,7 +18,7 @@ import { createRouter } from './router/config.js';
 import { Shell } from './shell/shell.js';
 import { Database } from '../persistence/connection/database.js';
 import { initCloudSync } from './composites/cloud-sync.js';
-import { initAuth } from '../ui/composites/auth.js';
+import { initAuth, verifyPremiumStatus } from '../ui/composites/auth.js';
 
 class Application {
     constructor() {
@@ -33,7 +33,6 @@ class Application {
         /* ── Stripe payment success handler ─────────────────── */
         var urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('success') === 'true') {
-            localStorage.setItem('tarteeb_premium', 'true');
             history.replaceState(null, '', window.location.pathname + window.location.hash);
 
             var toastCtr = document.getElementById('toast-container');
@@ -55,11 +54,8 @@ class Application {
             }
         }
 
-        /* ── Theme initialization ──────────────────────────── */
+        /* ── Theme initialization (premium guard runs after auth) ── */
         var savedTheme = localStorage.getItem('tarteeb_theme') || 'default';
-        if (savedTheme === 'ocean' && localStorage.getItem('tarteeb_premium') !== 'true') {
-            savedTheme = 'default';
-        }
         document.documentElement.setAttribute('data-theme', savedTheme);
         document.documentElement.classList.toggle('dark', savedTheme !== 'light');
 
@@ -85,6 +81,13 @@ class Application {
             var session = await initAuth(this.eventBus);
             if (session) {
                 localStorage.setItem('tarteeb_session_active', 'true');
+                var isPremium = await verifyPremiumStatus();
+                if (savedTheme === 'ocean' && !isPremium) {
+                    savedTheme = 'default';
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                    document.documentElement.classList.toggle('dark', true);
+                    localStorage.setItem('tarteeb_theme', savedTheme);
+                }
             }
 
             this.shell = new Shell(this.store, this.eventBus);

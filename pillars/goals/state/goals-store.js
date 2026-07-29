@@ -151,7 +151,7 @@ export class GoalsStore {
             return null;
         }
 
-        if (!canCreateEntity('goals', this.goals.length)) {
+        if (!await canCreateEntity('goals', this.goals.length)) {
             showPaywall();
             this.eventBus.publish('goals:freemium-blocked', { entityType: 'goals', limit: 3 });
             return null;

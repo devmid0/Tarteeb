@@ -5,6 +5,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_bSqzZAZgyo8iNNcH2jeggQ_luXGlgDs';
 
 let _supabase = null;
 let _eventBus = null;
+let _premiumCache = null;
 
 function initSupabase() {
     try {
@@ -46,6 +47,7 @@ export async function checkUserSession() {
                 email: data.session.user.email,
                 isPremium: false,
             };
+            verifyPremiumStatus();
             closeAuthModal();
             document.getElementById('app')?.classList.remove('auth-blur');
             localStorage.setItem('tarteeb_session_active', 'true');
@@ -105,6 +107,7 @@ export async function handleLogin(email, password) {
             email: data.user.email,
             isPremium: false,
         };
+        verifyPremiumStatus();
         closeAuthModal();
         document.getElementById('app')?.classList.remove('auth-blur');
     } catch (err) {
@@ -215,7 +218,68 @@ function _bindAuthEvents(card) {
     passwordInput.addEventListener('keydown', submitOnEnter);
 }
 
+export async function getCurrentSession() {
+    try {
+        if (!_supabase) return null;
+        var { data, error } = await _supabase.auth.getSession();
+        if (error || !data?.session) return null;
+        return data.session;
+    } catch (err) {
+        console.error('[Auth] getCurrentSession error:', err);
+        return null;
+    }
+}
+
+export async function verifyPremiumStatus(forceRefresh = false) {
+    if (!forceRefresh && _premiumCache !== null) {
+        return _premiumCache;
+    }
+    try {
+        var session = await getCurrentSession();
+        if (!session) {
+            _premiumCache = false;
+            return false;
+        }
+
+        var { data, error } = await _supabase
+            .from('profiles')
+            .select('is_premium')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (error) {
+            console.error('[Auth] verifyPremiumStatus query failed:', error.message);
+            _premiumCache = false;
+            return false;
+        }
+
+        if (!data) {
+            console.warn('[Auth] No profile found, defaulting to free');
+            _premiumCache = false;
+            return false;
+        }
+
+        var isPremium = data.is_premium === true;
+        _premiumCache = isPremium;
+
+        if (window.__tarteeb?.user) {
+            window.__tarteeb.user.isPremium = isPremium;
+        }
+
+        return isPremium;
+    } catch (err) {
+        console.error('[Auth] verifyPremiumStatus error:', err);
+        _premiumCache = false;
+        return false;
+    }
+}
+
+export function getSupabase() {
+    return _supabase;
+}
+
 export async function logout() {
+    _premiumCache = null;
     try {
         if (_supabase) {
             await _supabase.auth.signOut();
@@ -224,5 +288,6 @@ export async function logout() {
         console.error('[Auth] Logout error:', err);
     }
     localStorage.removeItem('tarteeb_session_active');
+    localStorage.removeItem('tarteeb_premium');
     window.location.href = './index.html';
 }

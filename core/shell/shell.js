@@ -397,13 +397,19 @@ export class Shell {
             themeLight.addEventListener('click', function () { _setTheme('light'); });
         }
         if (themeOcean) {
-            themeOcean.addEventListener('click', function () {
-                if (localStorage.getItem('tarteeb_premium') === 'true') {
+            themeOcean.addEventListener('click', async function () {
+                var auth = await import('../../ui/composites/auth.js');
+                var session = await auth.getCurrentSession();
+                if (!session) {
+                    auth.showAuthModal();
+                    return;
+                }
+                var p = await auth.verifyPremiumStatus();
+                if (p) {
                     _setTheme('ocean');
                 } else {
-                    import('../composites/cloud-sync.js').then(function (mod) {
-                        mod.showPaywall();
-                    });
+                    var mod = await import('../composites/cloud-sync.js');
+                    mod.showPaywall('ocean_theme');
                 }
             });
         }
@@ -446,42 +452,24 @@ export class Shell {
 
     /* ── Cloud Sync ──────────────────────────────────────── */
 
-    _handleSync(btn) {
-        var self = this;
+    async _handleSync(btn) {
         if (btn.classList.contains('syncing')) return;
 
-        if (localStorage.getItem('tarteeb_premium') !== 'true') {
-            import('../composites/cloud-sync.js').then(function (mod) {
-                mod.showPaywall();
-            });
-            return;
-        }
+        btn.classList.add('syncing');
+        btn.disabled = true;
+        btn.innerHTML =
+            '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0 sync-spin">' +
+                '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
+            '</svg>' +
+            '<span class="text-[13px] font-medium whitespace-nowrap">Syncing…</span>';
 
-        import('../composites/cloud-sync.js').then(async function (mod) {
-            btn.classList.add('syncing');
-            btn.disabled = true;
-            btn.innerHTML =
-                '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0 sync-spin">' +
-                    '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
-                '</svg>' +
-                '<span class="text-[13px] font-medium whitespace-nowrap">Syncing…</span>';
-
-            /* Push local data to cloud */
-            var db = window.__tarteeb && window.__tarteeb.database;
-            if (db) {
-                var localData = await db.exportAll();
-                await mod.syncToCloud(localData);
-            }
-
-            /* Pull cloud data into local */
-            var cloudData = await mod.syncFromCloud();
-            if (cloudData && db) {
-                await db.importAll(cloudData);
-            }
-
+        try {
+            var mod = await import('../composites/cloud-sync.js');
+            await mod.syncCloudData();
+        } finally {
             btn.classList.remove('syncing');
             btn.disabled = false;
-            var showLabel = !self.store.get('sidebar.collapsed') && !self._isMobile();
+            var showLabel = !this.store.get('sidebar.collapsed') && !this._isMobile();
             btn.innerHTML =
                 '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
                     '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
@@ -489,7 +477,7 @@ export class Shell {
                 (showLabel
                     ? '<span class="text-[13px] font-medium whitespace-nowrap">Sync Now</span>'
                     : '');
-        });
+        }
     }
 
     /* ── Data Export / Import ─────────────────────────────── */
@@ -685,15 +673,21 @@ export class Shell {
         /* CSV export (premium-gated) */
         var csvBtn = document.getElementById('export-csv-btn');
         if (csvBtn) {
-            csvBtn.addEventListener('click', function () {
-                if (localStorage.getItem('tarteeb_premium') === 'true') {
+            csvBtn.addEventListener('click', async function () {
+                var auth = await import('../../ui/composites/auth.js');
+                var session = await auth.getCurrentSession();
+                if (!session) {
+                    auth.showAuthModal();
+                    return;
+                }
+                var p = await auth.verifyPremiumStatus(true);
+                if (p) {
                     self._closeExportModal();
                     self._exportCSV();
                 } else {
                     self._closeExportModal();
-                    import('../composites/cloud-sync.js').then(function (mod) {
-                        mod.showPaywall();
-                    });
+                    var mod = await import('../composites/cloud-sync.js');
+                    mod.showPaywall('csv_export');
                 }
             });
         }

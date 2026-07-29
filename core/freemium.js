@@ -2,14 +2,16 @@
 
 var FREE_LIMITS = { finance: 10, tasks: 15, knowledge: 5, habits: 5, goals: 3 };
 
-export function canCreateEntity(entityType, currentCount) {
-    if (localStorage.getItem('tarteeb_premium') === 'true') return true;
+export async function canCreateEntity(entityType, currentCount) {
+    var auth = await import('../ui/composites/auth.js');
+    var isPremium = await auth.verifyPremiumStatus();
+    if (isPremium) return true;
     var limit = FREE_LIMITS[entityType];
     return limit === undefined || currentCount < limit;
 }
 
 export function showPaywall() {
     import('./composites/cloud-sync.js').then(function (mod) {
-        mod.showPaywall();
+        mod.showPaywall('entity_limit');
     });
 }

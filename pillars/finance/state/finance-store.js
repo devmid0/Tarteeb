@@ -98,7 +98,7 @@ export class FinanceStore {
             return null;
         }
 
-        if (!canCreateEntity('finance', this.transactions.length)) {
+        if (!await canCreateEntity('finance', this.transactions.length)) {
             showPaywall();
             this.eventBus.publish('finance:freemium-blocked', { entityType: 'finance', limit: 10 });
             return null;

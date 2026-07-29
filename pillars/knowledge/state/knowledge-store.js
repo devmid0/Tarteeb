@@ -183,7 +183,7 @@ export class KnowledgeStore {
             return null;
         }
 
-        if (!canCreateEntity('knowledge', this.notes.length)) {
+        if (!await canCreateEntity('knowledge', this.notes.length)) {
             showPaywall();
             this.eventBus.publish('knowledge:freemium-blocked', { entityType: 'knowledge', limit: 5 });
             return null;

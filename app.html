@@ -4,7 +4,6 @@
     <script>
         (function () {
             var t = localStorage.getItem('tarteeb_theme') || 'default';
-            if (t === 'ocean' && localStorage.getItem('tarteeb_premium') !== 'true') t = 'default';
             document.documentElement.setAttribute('data-theme', t);
             document.documentElement.classList.toggle('dark', t !== 'light');
         })();
@@ -16,6 +15,15 @@
     <link rel="icon" href="./assets/icons/icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
     <title>Tarteeb</title>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-91W4M368ZK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-91W4M368ZK');
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>

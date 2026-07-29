@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <script>
-        if (localStorage.getItem('tarteeb_session_active') === 'true' || localStorage.getItem('tarteeb_premium') === 'true') {
+        if (localStorage.getItem('tarteeb_session_active') === 'true') {
             window.location.href = 'app.html';
         }
     </script>
@@ -15,6 +15,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tarteeb — The Ultimate Life OS</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-91W4M368ZK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-91W4M368ZK');
+    </script>
+    <script type="module" src="./ui/composites/analytics.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -96,7 +105,7 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
-                    <a href="https://buy.stripe.com/test_6oU7sMgzUd8o5Wl9Hs6wE00" class="group w-full sm:w-auto px-8 py-4 rounded-xl text-lg font-bold text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-xl shadow-orange-500/20 hover:shadow-orange-500/30 transition-all duration-300 text-center inline-flex items-center justify-center gap-2">
+                    <a href="https://buy.stripe.com/test_6oU7sMgzUd8o5Wl9Hs6wE00" onclick="trackEvent('checkout_started', {source:'landing_page'})" class="group w-full sm:w-auto px-8 py-4 rounded-xl text-lg font-bold text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-xl shadow-orange-500/20 hover:shadow-orange-500/30 transition-all duration-300 text-center inline-flex items-center justify-center gap-2">
                         Upgrade to Pro — $5
                         <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                     </a>

@@ -94,7 +94,7 @@ export class TaskStore {
             return null;
         }
 
-        if (!canCreateEntity('tasks', this.tasks.length)) {
+        if (!await canCreateEntity('tasks', this.tasks.length)) {
             showPaywall();
             this.eventBus.publish('tasks:freemium-blocked', { entityType: 'tasks', limit: 15 });
             return null;

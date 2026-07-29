@@ -1,60 +1,129 @@
 /**
  * Tarteeb — Cloud Sync (Public Shell Module)
  *
- * Lightweight module used by the app shell and non-premium flows.
- * Exports are safe to call regardless of subscription status:
- *   - syncToCloud / syncFromCloud are placeholders that never throw
+ * Handles the full sync cycle via profiles.app_data JSONB column.
+ *   - syncCloudData checks premium, gathers local data, pushes to
+ *     Supabase, pulls back, and writes to localStorage + IndexedDB
  *   - handleUpgradeClick redirects to Stripe checkout
  *   - showPaywall renders the premium upgrade modal
- *
- * The full Supabase-backed implementation lives in
- * ui/composites/cloud-sync.js and is only used after a
- * successful upgrade.
  */
 
 'use strict';
 
+import { verifyPremiumStatus, getCurrentSession, getSupabase } from '../../ui/composites/auth.js';
+import { trackEvent } from '../../ui/composites/analytics.js';
+
 /* ── Stripe Checkout ──────────────────────────────────────── */
 
-/**
- * Redirect the user to the Stripe Payment Link for Tarteeb Pro.
- * Replace the URL with your live Stripe link in production.
- */
 export function handleUpgradeClick() {
     window.location.href = 'https://buy.stripe.com/test_6oU7sMgzUd8o5Wl9Hs6wE00';
 }
 
-/* ── Sync Placeholders ────────────────────────────────────── */
+/* ── Sync ──────────────────────────────────────────────────── */
 
-/**
- * Push local data to the cloud.
- * Placeholder — returns a resolved promise so dynamic imports
- * in shell.js never crash on a non-premium account.
- * @param {Object} [localData] — unused in this module
- */
-export async function syncToCloud(localData) {
-    console.log('[CloudSync] Sync requires Tarteeb Pro — upgrade to enable cloud backup.');
-    return Promise.resolve();
-}
+export async function syncCloudData() {
+    try {
+        var isPremium = await verifyPremiumStatus(true);
+        if (!isPremium) {
+            showPaywall('cloud_sync');
+            return;
+        }
 
-/**
- * Pull cloud data into the local database.
- * Placeholder — returns a resolved promise yielding null.
- * @returns {Promise<null>}
- */
-export async function syncFromCloud() {
-    console.log('[CloudSync] Sync requires Tarteeb Pro — upgrade to enable cloud backup.');
-    return Promise.resolve(null);
+        var session = await getCurrentSession();
+        if (!session) {
+            console.warn('[CloudSync] No active session — cannot sync');
+            return;
+        }
+
+        var supabase = getSupabase();
+        if (!supabase) {
+            console.error('[CloudSync] Supabase client not available');
+            return;
+        }
+
+        /* ── Gather local data ── */
+        var payload = { localStorage: {}, stores: null };
+
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.indexOf('tarteeb_') === 0) {
+                try {
+                    payload.localStorage[key] = JSON.parse(localStorage.getItem(key));
+                } catch (_) {
+                    payload.localStorage[key] = localStorage.getItem(key);
+                }
+            }
+        }
+
+        var db = window.__tarteeb && window.__tarteeb.database;
+        if (db) {
+            payload.stores = await db.exportAll();
+        }
+
+        /* ── Push to Supabase ── */
+        var { error: pushError } = await supabase
+            .from('profiles')
+            .update({ app_data: payload })
+            .eq('id', session.user.id);
+
+        if (pushError) {
+            console.error('[CloudSync] Push failed:', pushError.message);
+            return;
+        }
+
+        /* ── Pull from Supabase ── */
+        var { data, error: pullError } = await supabase
+            .from('profiles')
+            .select('app_data')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (pullError) {
+            console.error('[CloudSync] Pull failed:', pullError.message);
+            return;
+        }
+
+        if (!data?.app_data) {
+            console.warn('[CloudSync] No cloud data returned after push');
+            return;
+        }
+
+        var cloudData = data.app_data;
+
+        /* ── Write localStorage keys from cloud ── */
+        if (cloudData.localStorage && typeof cloudData.localStorage === 'object') {
+            for (var lsKey in cloudData.localStorage) {
+                if (lsKey.indexOf('tarteeb_') === 0) {
+                    var val = cloudData.localStorage[lsKey];
+                    if (typeof val === 'object' && val !== null) {
+                        localStorage.setItem(lsKey, JSON.stringify(val));
+                    } else {
+                        localStorage.setItem(lsKey, String(val));
+                    }
+                }
+            }
+        }
+
+        /* ── Restore IndexedDB stores from cloud ── */
+        if (cloudData.stores && db) {
+            await db.importAll(cloudData.stores);
+        }
+
+        /* ── Notify UI ── */
+        window.dispatchEvent(new CustomEvent('cloud:synced', {
+            detail: { timestamp: new Date().toISOString() },
+        }));
+
+        console.log('[CloudSync] Sync complete');
+    } catch (err) {
+        console.error('[CloudSync] Sync error:', err);
+    }
 }
 
 /* ── Init ──────────────────────────────────────────────────── */
 
-/**
- * No-op initializer.  Real Supabase client setup is handled
- * by ui/composites/cloud-sync.js after an upgrade.
- */
 export function initCloudSync() {
-    /* Intentional no-op for the public shell module */
+    /* no-op — auth module owns the Supabase client */
 }
 
 /* ── Paywall Modal ─────────────────────────────────────────── */
@@ -63,8 +132,10 @@ export function initCloudSync() {
  * Show the premium upgrade modal overlay.
  * Safe to call from any view — checks localStorage bypass first.
  */
-export function showPaywall() {
+export function showPaywall(featureName) {
     closePaywall();
+
+    trackEvent('paywall_viewed', { feature_attempted: featureName || 'unknown' });
 
     var portal = document.getElementById('modal-portal');
     if (!portal) return;
@@ -118,7 +189,10 @@ export function showPaywall() {
 
     function close() { closePaywall(); }
 
-    card.querySelector('.paywall-upgrade').addEventListener('click', handleUpgradeClick);
+    card.querySelector('.paywall-upgrade').addEventListener('click', function () {
+        trackEvent('checkout_started', { source: 'app_paywall' });
+        handleUpgradeClick();
+    });
     card.querySelector('.paywall-close').addEventListener('click', close);
     backdrop.addEventListener('click', close);
 
