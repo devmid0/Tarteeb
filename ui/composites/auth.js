@@ -48,6 +48,7 @@ export async function checkUserSession() {
             };
             closeAuthModal();
             document.getElementById('app')?.classList.remove('auth-blur');
+            localStorage.setItem('tarteeb_session_active', 'true');
             console.log('[Auth] Session found:', data.session.user.email);
             return data.session;
         }
@@ -98,6 +99,7 @@ export async function handleLogin(email, password) {
             return;
         }
         console.log('[Auth] Login success:', data.user.email);
+        localStorage.setItem('tarteeb_session_active', 'true');
         window.__tarteeb.user = {
             id: data.user.id,
             email: data.user.email,
@@ -211,4 +213,16 @@ function _bindAuthEvents(card) {
     }
     emailInput.addEventListener('keydown', submitOnEnter);
     passwordInput.addEventListener('keydown', submitOnEnter);
+}
+
+export async function logout() {
+    try {
+        if (_supabase) {
+            await _supabase.auth.signOut();
+        }
+    } catch (err) {
+        console.error('[Auth] Logout error:', err);
+    }
+    localStorage.removeItem('tarteeb_session_active');
+    window.location.href = './index.html';
 }

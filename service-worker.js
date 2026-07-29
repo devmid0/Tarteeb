@@ -2,6 +2,7 @@ const CACHE_NAME = 'tarteeb-v1';
 
 const PRECACHE_URLS = [
   './index.html',
+  './app.html',
   './manifest.json',
   './assets/icons/icon-192.svg',
   './assets/icons/icon-512.svg',

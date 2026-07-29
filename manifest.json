@@ -2,7 +2,7 @@
   "name": "Tarteeb",
   "short_name": "Tarteeb",
   "description": "Personal productivity — tasks, goals, habits, finance, knowledge.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

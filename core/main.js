@@ -82,7 +82,10 @@ class Application {
             initCloudSync(this.database, this.eventBus);
 
             /* Gate behind authentication — shows modal + blurs app if no session */
-            await initAuth(this.eventBus);
+            var session = await initAuth(this.eventBus);
+            if (session) {
+                localStorage.setItem('tarteeb_session_active', 'true');
+            }
 
             this.shell = new Shell(this.store, this.eventBus);
             this.shell.mount();

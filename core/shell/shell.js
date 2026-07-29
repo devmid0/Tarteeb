@@ -266,6 +266,20 @@ export class Shell {
                 '</button>' +
             '</div>';
 
+        /* Logout button */
+        html +=
+                '<button id="logout-btn"' +
+                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                               'text-text-tertiary hover:text-status-error hover:bg-status-error/5 transition-all duration-200" title="Logout">' +
+                    '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
+                        '<path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h5a1 1 0 100-2H4V5h4a1 1 0 100-2H3zm11.707 3.293a1 1 0 010 1.414L12.414 10l2.293 2.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clip-rule="evenodd"/>' +
+                        '<path d="M10 9h7a1 1 0 110 2h-7V9z"/>' +
+                    '</svg>' +
+                    (showLabel
+                        ? '<span class="text-[13px] font-medium whitespace-nowrap">Logout</span>'
+                        : '') +
+                '</button>';
+
         /* Collapse toggle */
         html +=
                 '<button id="sidebar-toggle"' +
@@ -391,6 +405,16 @@ export class Shell {
                         mod.showPaywall();
                     });
                 }
+            });
+        }
+
+        /* ── Logout ── */
+        var logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function () {
+                import('../../ui/composites/auth.js').then(function (mod) {
+                    mod.logout();
+                });
             });
         }
 
