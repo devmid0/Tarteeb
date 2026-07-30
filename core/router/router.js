@@ -122,6 +122,9 @@ export class Router {
             this.viewport.classList.add('vp-exiting');
             await new Promise(function (r) { setTimeout(r, 220); });
             
+            // Defer DOM swaps to next frame so the browser composites before painting
+            await new Promise(requestAnimationFrame);
+            
             // Unmount current view
             if (this.currentView && this.currentView.unmount) {
                 this.currentView.unmount();

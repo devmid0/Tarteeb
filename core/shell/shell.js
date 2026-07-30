@@ -142,7 +142,7 @@ export class Shell {
 
         /* ── Brand ── */
         html +=
-            '<div class="flex items-center h-14 px-4 flex-shrink-0">' +
+            '<div class="flex items-center ' + (showLabel ? 'justify-start px-4' : 'justify-center px-0') + ' h-14 flex-shrink-0">' +
                 '<div class="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-lg shadow-md">' +
                     '<span class="select-none">T</span>' +
                 '</div>' +
@@ -163,7 +163,7 @@ export class Shell {
 
             html +=
                 '<a href="#/' + p.id + '"' +
-                   ' class="group relative flex items-center gap-3 rounded-lg px-2.5 py-2 transition-all duration-200 ' +
+                   ' class="group relative flex items-center ' + (showLabel ? 'gap-3 px-2.5' : 'justify-center px-0') + ' rounded-lg py-2 transition-all duration-200 ' +
                           activeBg + ' ' + activeText + ' hover:bg-white/[0.04]"' +
                    ' data-pillar="' + p.id + '"' +
                    ' aria-current="' + (active ? 'page' : 'false') + '"' +
@@ -189,9 +189,11 @@ export class Shell {
         /* ── Upgrade CTA ── */
         html +=
             '<div class="px-3 mt-4 mb-2">' +
-                '<button id="sidebar-upgrade-btn" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-orange-500/30 text-orange-400 font-bold hover:from-orange-500/20 hover:to-purple-500/20 hover:border-orange-500/50 transition-all duration-300 shadow-[0_0_15px_rgba(234,88,12,0.05)]">' +
-                    '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>' +
-                    'Upgrade to Pro' +
+                '<button id="sidebar-upgrade-btn" class="w-full flex items-center ' + (showLabel ? 'justify-center gap-2 px-4' : 'justify-center gap-0 px-0') + ' py-2.5 rounded-xl bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-orange-500/30 text-orange-400 font-bold hover:from-orange-500/20 hover:to-purple-500/20 hover:border-orange-500/50 transition-all duration-300 shadow-[0_0_15px_rgba(234,88,12,0.05)]">' +
+                    '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>' +
+                    (showLabel
+                        ? '<span class="transition-opacity duration-300 text-[13px]">Upgrade to Pro</span>'
+                        : '') +
                 '</button>' +
             '</div>';
 
@@ -202,7 +204,7 @@ export class Shell {
         /* Sync button */
         html +=
                 '<button id="sync-btn"' +
-                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                        ' class="w-full flex items-center ' + (showLabel ? 'gap-2 px-2.5' : 'justify-center px-0') + ' rounded-lg py-2 ' +
                                'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200">' +
                     '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
                         '<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033l.312.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.25a.75.75 0 00-1.5 0V5.326l-.312-.311A7 7 0 002.25 11.19a.75.75 0 001.449.39 5.5 5.5 0 0112.568-4.824l.312.311h-2.433a.75.75 0 000 1.5h3.634a.75.75 0 00.53-.219z" clip-rule="evenodd"/>' +
@@ -215,7 +217,7 @@ export class Shell {
         /* Export button */
         html +=
                 '<button id="export-btn"' +
-                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                        ' class="w-full flex items-center ' + (showLabel ? 'gap-2 px-2.5' : 'justify-center px-0') + ' rounded-lg py-2 ' +
                                'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200" title="Export Data">' +
                     '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
                         '<path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/>' +
@@ -229,7 +231,7 @@ export class Shell {
         /* Import button */
         html +=
                 '<button id="import-btn"' +
-                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                        ' class="w-full flex items-center ' + (showLabel ? 'gap-2 px-2.5' : 'justify-center px-0') + ' rounded-lg py-2 ' +
                                'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04] transition-all duration-200" title="Import Backup">' +
                     '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
                         '<path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 101.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636V13.25z"/>' +
@@ -247,7 +249,7 @@ export class Shell {
         var currentTheme = localStorage.getItem('tarteeb_theme') || 'default';
         function _themeBtnCls(id) {
             var active = id === currentTheme;
-            return 'theme-btn flex-1 h-6 rounded-md text-[10px] font-medium border transition-all duration-150 ' +
+            return 'theme-btn ' + (showLabel ? 'flex-1' : 'w-6') + ' h-6 rounded-md text-[10px] font-medium border transition-all duration-150 flex items-center justify-center ' +
                    (active
                        ? 'bg-accent-tasks/15 border-accent-tasks/30 text-accent-tasks'
                        : 'bg-surface-raised border-white/[0.06] text-text-tertiary hover:text-text-primary hover:bg-white/[0.04]');
@@ -258,7 +260,7 @@ export class Shell {
                     ? '<span class="text-[10px] font-medium text-text-disabled uppercase tracking-wider">Theme</span>'
                     : '') +
             '</div>' +
-            '<div class="flex gap-1 px-2 pb-1">' +
+            '<div class="flex ' + (showLabel ? 'gap-1 px-2' : 'justify-center gap-0.5 px-0') + ' pb-1">' +
                 '<button id="theme-default"' +
                         ' class="' + _themeBtnCls('default') + '"' +
                         ' title="' + (showLabel ? '' : 'Default (Dark)') + '">' +
@@ -279,7 +281,7 @@ export class Shell {
         /* Logout button */
         html +=
                 '<button id="logout-btn"' +
-                        ' class="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 ' +
+                        ' class="w-full flex items-center ' + (showLabel ? 'gap-2 px-2.5' : 'justify-center px-0') + ' rounded-lg py-2 ' +
                                'text-text-tertiary hover:text-status-error hover:bg-status-error/5 transition-all duration-200" title="Logout">' +
                     '<svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] flex-shrink-0">' +
                         '<path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h5a1 1 0 100-2H4V5h4a1 1 0 100-2H3zm11.707 3.293a1 1 0 010 1.414L12.414 10l2.293 2.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clip-rule="evenodd"/>' +

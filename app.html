@@ -3580,7 +3580,7 @@
     </style>
 </head>
 
-<body class="bg-surface-canvas text-text-primary font-body antialiased overflow-hidden selection:bg-accent-tasks/20 selection:text-text-primary">
+<body class="bg-surface-canvas text-text-primary font-body antialiased overflow-hidden overscroll-none selection:bg-accent-tasks/20 selection:text-text-primary">
 
     <div id="app" class="flex h-screen w-screen overflow-hidden">
 
@@ -3589,7 +3589,7 @@
 
         <!-- Main content -->
         <main id="main-content" class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-            <div id="viewport" class="flex-1 overflow-y-auto overflow-x-hidden"></div>
+            <div id="viewport" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth transform-gpu" style="-webkit-overflow-scrolling: touch; transform: translateZ(0); will-change: transform, opacity;"></div>
         </main>
     </div>
 
